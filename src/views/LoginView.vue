@@ -55,16 +55,35 @@
         <div class="flex flex-col space-y-3">
           <button
             @click="handleSocialLogin('kakao')"
-            class="w-full py-0 rounded-lg transition duration-200 overflow-hidden h-12 flex items-center justify-center"
+            class="w-full h-12 rounded-lg flex items-center justify-center space-x-2 transition duration-200 bg-[#FEE500] hover:bg-[#FDD835] text-[#3C1E1E]"
           >
-            <img :src="kakaoLoginImage" alt="카카오 로그인" class="w-full h-full object-contain" />
+            <svg
+              class="w-5 h-5"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 3C7.58 3 4 5.79 4 9.24C4 11.22 5.21 12.98 7.08 14.1C6.93 14.62 6.55 15.95 6.46 16.27C6.41 16.48 6.63 16.59 6.78 16.48C7.62 15.93 9.4 14.75 9.87 14.43C10.56 14.53 11.27 14.59 12 14.59C16.42 14.59 20 11.8 20 8.35C20 4.9 16.42 3 12 3Z"
+              />
+            </svg>
+            <span class="font-medium">카카오 로그인</span>
           </button>
 
           <button
             @click="handleSocialLogin('naver')"
-            class="w-full py-0 rounded-lg transition duration-200 overflow-hidden h-12 flex items-center justify-center"
+            class="w-full h-12 rounded-lg flex items-center justify-center space-x-2 transition duration-200 bg-[#03C75A] hover:bg-[#02b351] text-white"
           >
-            <img :src="naverLoginImage" alt="네이버 로그인" class="w-full h-full object-contain" />
+            <svg
+              class="w-4 h-4"
+              viewBox="0 0 24 24"
+              fill="white"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M16.5 19.5h-5l-7-10v10h-4v-15h5l7 10v-10h4v15z" />
+            </svg>
+            <!-- <span class="font-bold mr-1">N</span> -->
+            <span class="font-medium">네이버 로그인</span>
           </button>
         </div>
       </div>

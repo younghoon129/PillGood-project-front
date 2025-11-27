@@ -32,15 +32,24 @@
         :class="{ hidden: !isMenuOpen, flex: isMenuOpen }"
         class="md:flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6 absolute md:static top-16 left-0 right-0 bg-white md:bg-transparent shadow-lg md:shadow-none p-4 md:p-0"
       >
-        <router-link to="/search" class="text-gray-600 hover:text-indigo-500 font-medium">
+        <router-link
+          to="/search"
+          class="text-gray-600 hover:text-indigo-500 font-medium"
+          @click="closeMenu"
+        >
           검색
         </router-link>
-        <router-link to="/mypage" class="text-gray-600 hover:text-indigo-500 font-medium">
+        <router-link
+          to="/mypage"
+          class="text-gray-600 hover:text-indigo-500 font-medium"
+          @click="closeMenu"
+        >
           마이페이지
         </router-link>
         <router-link
           to="/login"
           class="text-white bg-indigo-500 hover:bg-indigo-600 py-2 px-4 rounded-lg transition duration-300"
+          @click="closeMenu"
         >
           로그인
         </router-link>
@@ -54,5 +63,8 @@ import { ref } from 'vue'
 const isMenuOpen = ref(false)
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value
+}
+const closeMenu = () => {
+  isMenuOpen.value = false
 }
 </script>

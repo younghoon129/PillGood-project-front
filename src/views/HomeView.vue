@@ -5,7 +5,7 @@
     class="bg-gradient-to-r from-indigo-50 to-white py-20 text-center rounded-xl shadow-lg mt-8 mb-16"
   >
     <h1 class="text-5xl font-extrabold text-gray-900 mb-4">
-      나만을 위한 💊 영양제 추천! , PillGood
+      나만을 위한 영양제 추천! , PillGood 💊
     </h1>
     <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
       복용 기록부터 성분 분석, 맞춤형 기록 및 알림까지. 놓치기 쉬운 건강을 스마트하게 관리하세요.
