@@ -1,10 +1,7 @@
 <script setup>
-import { RouterLink } from 'vue-router'
-
-// 준비 중 알림 함수
-const alertNotReady = () => {
-  alert("준비 중인 기능입니다! 조금만 기다려주세요 🛠️")
-}
+import { RouterLink } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+const authStore = useAuthStore();
 </script>
 
 <template>
@@ -12,15 +9,30 @@ const alertNotReady = () => {
     <div class="logo">
       <RouterLink :to="{ name: 'Home' }">💊 MyPill</RouterLink>
     </div>
-    
+
     <div class="menu">
-      <RouterLink :to="{ name: 'pills_index' }" class="nav-link">영양제 목록</RouterLink>
-      
+      <RouterLink :to="{ name: 'pills_index' }" class="nav-link"
+        >영양제 목록</RouterLink
+      >
+
       <span class="divider">|</span>
 
-      <a href="#" @click.prevent="alertNotReady" class="nav-link">로그인</a>
-      
-      <button @click="alertNotReady" class="signup-btn">회원가입</button>
+      <template v-if="!authStore.isLoggedIn">
+        <RouterLink :to="{ name: 'Login' }" class="nav-link">로그인</RouterLink>
+        <RouterLink :to="{ name: 'Signup' }" class="signup-btn"
+          >회원가입</RouterLink
+        >
+      </template>
+
+      <template v-else>
+        <span class="nav-link"
+          ><strong>{{ authStore.nickname }}</strong
+          >님</span
+        >
+        <a href="#" @click.prevent="authStore.logout" class="nav-link"
+          >로그아웃</a
+        >
+      </template>
     </div>
   </nav>
 </template>
@@ -33,7 +45,7 @@ const alertNotReady = () => {
   padding: 1rem 2rem;
   background-color: white;
   border-bottom: 1px solid #eee;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
 }
 
 .logo a {
