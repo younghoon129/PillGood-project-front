@@ -1,5 +1,5 @@
 {
-  "name": "pillgood-front",
+  "name": "front",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -9,41 +9,17 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "lint": "eslint . --fix --cache",
-    "format": "prettier --write src/"
+    "preview": "vite preview"
   },
   "dependencies": {
     "axios": "^1.13.2",
-    "pinia": "^3.0.3",
-    "vue": "^3.5.22",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.25",
     "vue-router": "^4.6.3"
   },
   "devDependencies": {
-    "@eslint/js": "^9.37.0",
-    "@vitejs/plugin-vue": "^6.0.1",
-    "@vue/eslint-config-prettier": "^10.2.0",
-    "autoprefixer": "^10.4.22",
-    "eslint": "^9.37.0",
-    "eslint-plugin-vue": "~10.5.0",
-    "globals": "^16.4.0",
-    "postcss": "^8.5.6",
-    "prettier": "3.6.2",
-    "tailwindcss": "^3.4.17",
-    "vite": "^7.1.11",
-    "vite-plugin-vue-devtools": "^8.0.3"
-  },
-  "description": "김영훈, 김두진 영양제 추천 프로젝트",
-  "main": "eslint.config.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/younghoon129/PillGood-project-front.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/younghoon129/PillGood-project-front/issues"
-  },
-  "homepage": "https://github.com/younghoon129/PillGood-project-front#readme"
+    "@vitejs/plugin-vue": "^6.0.2",
+    "vite": "^7.2.4",
+    "vite-plugin-vue-devtools": "^8.0.5"
+  }
 }
