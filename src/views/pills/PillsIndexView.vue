@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { usePillStore } from '@/stores/pills'
 import PillCard from '@/components/pills/PillCard.vue'
 
@@ -12,30 +12,88 @@ const shapeOptions = [
   '정(알약)', '캡슐', '액상', '분말(가루)', '과립', '환', '젤리', '바', '기타'
 ]
 const selectedShapes = ref([]) 
+const currentPage = ref(1) // 현재 페이지 번호 추가
 
-// 2. 검색 함수
-const searchPills = () => {
+// 2. 데이터 요청 함수 (페이지 번호를 받아서 처리)
+const fetchPills = (page) => {
+  currentPage.value = page // 현재 페이지 상태 업데이트
+  
   const params = {
     search_type: searchType.value,
     keyword: keyword.value,
     shapes: selectedShapes.value.join(',') 
   }
-  store.getPills(1, params)
+  store.getPills(page, params)
+  
+  // 페이지 이동 시 스크롤을 맨 위로 올리고 싶다면 아래 주석 해제
+  // 1번 방법: 다음 페이지 누르면 위로 바로 이동
+  // window.scrollTo(0, 0)
+  // 2번 방법: 부드럽게 스크롤 이동
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-// ▼▼▼ 3. 초기화 함수 추가 ▼▼▼
+// 3. 검색 버튼 클릭 (1페이지부터 검색)
+const searchPills = () => {
+  fetchPills(1)
+}
+
+// 4. 초기화 함수
 const resetSearch = () => {
-  // 모든 입력값 초기화
   searchType.value = ''
   keyword.value = ''
   selectedShapes.value = []
+  fetchPills(1)
+}
+
+// ▼▼▼ 5. 페이지네이션 로직 (Computed) ▼▼▼
+
+// 전체 페이지 수 계산 (한 페이지당 20개 기준)
+// store.count는 Store 수정 단계에서 추가된 전체 데이터 개수입니다.
+const totalPages = computed(() => {
+  if (!store.count) return 0
+  return Math.ceil(store.count / 20)
+})
+
+// 현재 페이지 그룹 계산 (9개씩 묶음)
+// 0그룹: 1~9페이지, 1그룹: 10~18페이지 ...
+const currentGroup = computed(() => {
+  return Math.ceil(currentPage.value / 9) - 1
+})
+
+// 화면에 보여줄 페이지 번호 리스트 (예: [1,2,3...9] 또는 [10,11...18])
+const pageNumbers = computed(() => {
+  const start = currentGroup.value * 9 + 1
+  const end = Math.min(start + 8, totalPages.value)
   
-  // 전체 목록 다시 불러오기 (파라미터 없이 호출)
-  store.getPills(1)
+  const pages = []
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  return pages
+})
+
+// 이전/다음 그룹 존재 여부
+const hasPrevGroup = computed(() => currentGroup.value > 0)
+const hasNextGroup = computed(() => (currentGroup.value + 1) * 9 < totalPages.value)
+
+// 다음 그룹으로 이동 (예: 9페이지 -> > 버튼 -> 10페이지)
+const moveToNextGroup = () => {
+  const nextGroupStartPage = (currentGroup.value + 1) * 9 + 1
+  if (nextGroupStartPage <= totalPages.value) {
+    fetchPills(nextGroupStartPage)
+  }
+}
+
+// 이전 그룹으로 이동 (예: 10페이지 -> < 버튼 -> 1페이지)
+const moveToPrevGroup = () => {
+  const prevGroupStartPage = (currentGroup.value - 1) * 9 + 1
+  if (prevGroupStartPage >= 1) {
+    fetchPills(prevGroupStartPage)
+  }
 }
 
 onMounted(() => {
-  store.getPills()
+  fetchPills(1)
 })
 </script>
 
@@ -102,7 +160,33 @@ onMounted(() => {
       <p>조건에 맞는 영양제가 없습니다.</p>
     </div>
 
-  </div>
+    <div v-if="totalPages > 0" class="pagination">
+      <button 
+        @click="moveToPrevGroup" 
+        :disabled="!hasPrevGroup"
+        class="page-control-btn"
+      >
+        &lt;
+      </button>
+
+      <button 
+        v-for="page in pageNumbers" 
+        :key="page"
+        @click="fetchPills(page)"
+        :class="['page-btn', { active: currentPage === page }]"
+      >
+        {{ page }}
+      </button>
+
+      <button 
+        @click="moveToNextGroup" 
+        :disabled="!hasNextGroup"
+        class="page-control-btn"
+      >
+        &gt;
+      </button>
+    </div>
+    </div>
 </template>
 
 <style scoped>
@@ -181,26 +265,23 @@ onMounted(() => {
   background-color: #1864ab;
 }
 
-/* ▼▼▼ 초기화 버튼 스타일 추가 ▼▼▼ */
 .reset-btn {
   padding: 0 20px;
-  background-color: #f1f3f5; /* 연한 회색 */
-  color: #495057;            /* 진한 회색 글씨 */
+  background-color: #f1f3f5;
+  color: #495057;
   border: 1px solid #dee2e6;
   border-radius: 50px;
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.2s;
-  white-space: nowrap; /* 글자 줄바꿈 방지 */
+  white-space: nowrap;
 }
 
 .reset-btn:hover {
   background-color: #e9ecef;
   border-color: #ced4da;
 }
-/* ▲▲▲ 초기화 버튼 스타일 끝 ▲▲▲ */
-
 
 .filter-box {
   background-color: #f8f9fa;
@@ -274,5 +355,70 @@ onMounted(() => {
     flex-direction: column;
     gap: 10px;
   }
+}
+
+/* ▼▼▼ 페이지네이션 스타일 추가 ▼▼▼ */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 60px;
+  margin-bottom: 40px;
+}
+
+.page-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e9ecef;
+  background-color: white;
+  color: #495057;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+  
+  /* 숫자가 중앙에 오도록 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.page-btn:hover {
+  background-color: #f1f3f5;
+  border-color: #dee2e6;
+}
+
+.page-btn.active {
+  background-color: #1c7ed6;
+  color: white;
+  border-color: #1c7ed6;
+}
+
+.page-control-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background-color: transparent;
+  color: #868e96;
+  font-weight: bold;
+  font-size: 1.2rem;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: color 0.2s;
+  
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.page-control-btn:hover:not(:disabled) {
+  background-color: #f1f3f5;
+  color: #212529;
+}
+
+.page-control-btn:disabled {
+  color: #dee2e6;
+  cursor: not-allowed;
 }
 </style>
