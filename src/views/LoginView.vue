@@ -6,8 +6,14 @@ import { useRouter } from "vue-router";
 const authStore = useAuthStore();
 const router = useRouter();
 
+// 카카오 로그인 설정
 const KAKAO_REST_API_KEY = "8bfc2c0375eb0ec262342e4f996b7e4d"; // 카카오 콘솔 '플랫폼 키'에서 확인
 const KAKAO_REDIRECT_URI = "http://localhost:5173/login/kakao"; // 콘솔에 등록한 URI와 동일해야 함
+
+// 네이버 로그인 설정
+const NAVER_CLIENT_ID = "tPDkW3PnoZVt6H0P8LTM";
+const NAVER_REDIRECT_URI = "http://localhost:5173/login/naver";
+const STATE = "random_string_123"; // 보안을 위한 임의의 문자열
 
 const username = ref("");
 const password = ref("");
@@ -32,6 +38,9 @@ const handleSocialLogin = (platform) => {
 
     // 3. 카카오 인증 페이지로 이동
     window.location.href = kakaoAuthUrl;
+  } else if (platform === "naver") {
+    const naverAuthUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${NAVER_CLIENT_ID}&redirect_uri=${NAVER_REDIRECT_URI}&state=${STATE}`;
+    window.location.href = naverAuthUrl;
   }
 };
 </script>
