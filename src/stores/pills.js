@@ -1,41 +1,34 @@
-// src/stores/pills.js
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import axios from 'axios'
 
 export const usePillStore = defineStore('pills', () => {
-  // 1. State (데이터 보관함)
-  const pills = ref([])      // 전체 목록
-  const pill = ref(null)     // 상세 정보 (1개)
+  // 1. State
+  const pills = ref([])
+  const pill = ref(null)
+  const count = ref(0) // ★ 전체 개수 저장용 변수 추가
 
-  // API 기본 주소 (반복 사용되니 변수로)
   const API_URL = 'http://127.0.0.1:8000'
 
-  // 2. Actions (함수/로직)
-  
-  // [목록 가져오기]
-const getPills = (page = 1, searchParams = {}) => {
-    
+  // 2. Actions
+  const getPills = (page = 1, searchParams = {}) => {
     axios({
       method: 'get',
-      url: `${API_URL}/pills/`, // 혹은 views.index 주소
-      // params 옵션에 넣으면 자동으로 주소 뒤에 ?keyword=...&search_type=... 형태로 붙습니다.
+      url: `${API_URL}/pills/`,
       params: {
         page: page,
-        ...searchParams // 검색 조건 객체 풀어서 넣기
+        ...searchParams
       }
     })
       .then((response) => {
-        // ... 데이터 저장 로직 ...
         pills.value = response.data.results
-        // 페이지네이션 정보 등 저장
+        count.value = response.data.count // ★ API의 전체 개수를 state에 저장
       })
       .catch((error) => {
         console.log('검색 에러:', error)
       })
   }
 
-  // [상세 정보 가져오기]
   const getPillDetail = function (pillId) {
     axios({
       method: 'get',
@@ -49,6 +42,6 @@ const getPills = (page = 1, searchParams = {}) => {
       })
   }
 
-  // 3. 밖에서 쓸 수 있게 return
-  return { pills, pill, getPills, getPillDetail }
+  // ★ count도 반환 목록에 추가
+  return { pills, pill, count, getPills, getPillDetail }
 })
