@@ -16,6 +16,7 @@ import IngredientListView from "@/views/pills/IngredientListView.vue";
 import IngredientDetailView from "@/views/pills/IngredientDetailView.vue";
 import SubstancePillsView from "@/views/pills/SubstancePillsView.vue";
 import MyPageView from "@/views/MyPageView.vue";
+import GoogleCallbackView from "@/views/GoogleCallbackView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -34,6 +35,11 @@ const router = createRouter({
       path: "/login/naver",
       name: "NaverCallback",
       component: NaverCallbackView,
+    },
+    {
+      path: "/login/google",
+      name: "GoogleCallback",
+      component: GoogleCallbackView,
     },
     {
       path: "/signup",

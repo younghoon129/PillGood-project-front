@@ -9,11 +9,20 @@ const router = useRouter();
 // 카카오 로그인 설정
 const KAKAO_REST_API_KEY = "8bfc2c0375eb0ec262342e4f996b7e4d"; // 카카오 콘솔 '플랫폼 키'에서 확인
 const KAKAO_REDIRECT_URI = "http://localhost:5173/login/kakao"; // 콘솔에 등록한 URI와 동일해야 함
+const KAKAO_AUTH_URL = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_REST_API_KEY}&redirect_uri=${KAKAO_REDIRECT_URI}&response_type=code&scope=profile_nickname,account_email,talk_calendar&prompt=consent`;
 
 // 네이버 로그인 설정
 const NAVER_CLIENT_ID = "tPDkW3PnoZVt6H0P8LTM";
 const NAVER_REDIRECT_URI = "http://localhost:5173/login/naver";
 const STATE = "random_string_123"; // 보안을 위한 임의의 문자열
+const NAVER_AUTH_URL = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${NAVER_CLIENT_ID}&redirect_uri=${NAVER_REDIRECT_URI}&state=${STATE}`;
+
+// 구글 캘린더 설정
+const GOOGLE_CLIENT_ID =
+  "34177585488-sbk57388v5hfnjprm894sfl5ektmjpn9.apps.googleusercontent.com";
+const GOOGLE_REDIRECT_URI = "http://localhost:5173/login/google";
+// 캘린더 수정을 위한 권한(Scope) 추가
+const GOOGLE_AUTH_URL = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${GOOGLE_REDIRECT_URI}&response_type=code&scope=https://www.googleapis.com/auth/calendar.events%20openid%20email%20profile&access_type=offline&prompt=consent`;
 
 const username = ref("");
 const password = ref("");
@@ -34,13 +43,11 @@ const handleLogin = async () => {
 const handleSocialLogin = (platform) => {
   if (platform === "kakao") {
     // 2. 카카오 인가 코드 요청 URL 생성
-    const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_REST_API_KEY}&redirect_uri=${KAKAO_REDIRECT_URI}&response_type=code`;
-
-    // 3. 카카오 인증 페이지로 이동
-    window.location.href = kakaoAuthUrl;
+    window.location.href = KAKAO_AUTH_URL;
   } else if (platform === "naver") {
-    const naverAuthUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${NAVER_CLIENT_ID}&redirect_uri=${NAVER_REDIRECT_URI}&state=${STATE}`;
-    window.location.href = naverAuthUrl;
+    window.location.href = NAVER_AUTH_URL;
+  } else if (platform === "google") {
+    window.location.href = GOOGLE_AUTH_URL;
   }
 };
 </script>
@@ -92,6 +99,28 @@ const handleSocialLogin = (platform) => {
             <path d="M16.5 19.5h-5l-7-10v10h-4v-15h5l7 10v-10h4v15z" />
           </svg>
           <span>네이버 로그인</span>
+        </button>
+
+        <button @click="handleSocialLogin('google')" class="social-btn google">
+          <svg class="icon" viewBox="0 0 24 24">
+            <path
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              fill="#4285F4"
+            />
+            <path
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              fill="#34A853"
+            />
+            <path
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+              fill="#FBBC05"
+            />
+            <path
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              fill="#EA4335"
+            />
+          </svg>
+          <span>구글로 시작하기</span>
         </button>
       </div>
     </div>
@@ -218,5 +247,11 @@ const handleSocialLogin = (platform) => {
 .naver {
   background-color: #03c75a;
   color: white;
+}
+
+.google {
+  background-color: #ffffff;
+  color: #757575;
+  border: 1px solid #ddd !important;
 }
 </style>

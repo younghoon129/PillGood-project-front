@@ -46,6 +46,8 @@
             </div>
           </div>
 
+          <CalendarRegisterForm />
+          <hr />
           <div class="category-section">
             <span class="label">나의 관심 건강 카테고리</span>
             <div
@@ -136,6 +138,7 @@
 import { ref, onMounted, computed } from "vue";
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth";
+import CalendarRegisterForm from "@/components/CalendarRegisterForm.vue";
 
 const authStore = useAuthStore();
 const profileData = ref(null);
@@ -146,6 +149,7 @@ const providerLabel = computed(() => {
   const providers = {
     kakao: "카카오 로그인",
     naver: "네이버 로그인",
+    google: "구글 로그인",
     local: "자체 회원",
   };
   return providers[profileData.value?.provider] || "일반 회원";
@@ -154,6 +158,7 @@ const providerLabel = computed(() => {
 const loginType = computed(() => {
   if (profileData.value?.username?.startsWith("kakao_")) return "카카오 로그인";
   if (profileData.value?.username?.startsWith("naver_")) return "네이버 로그인";
+  if (profileData.value?.username?.startsWith("google_")) return "구글 로그인";
   return "일반 로그인";
 });
 
@@ -268,6 +273,11 @@ const updateProfile = async () => {
 .provider-badge.naver {
   background-color: #03c75a;
   color: #ffffff;
+}
+
+.provider-badge.google {
+  background-color: white;
+  color: black;
 }
 
 /* 헤더 및 섹션 스타일 */
