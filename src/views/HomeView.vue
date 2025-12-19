@@ -8,6 +8,12 @@ const goPillList = () => {
   router.push({ name: 'pills_index' })
 }
 
+// '맞춤 추천' 페이지로 이동
+const goRecommendation = () => {
+  // router/index.js에 등록한 name: 'recommendation'으로 이동
+  router.push({ name: 'recommendation' })
+}
+
 // 준비 중 알림 함수
 const alertNotReady = () => {
   alert("준비 중인 기능입니다! 조금만 기다려주세요 🛠️")
@@ -48,7 +54,7 @@ const alertNotReady = () => {
         <p>나에게 위험한 성분을<br>미리 알려드려요</p>
       </div>
 
-      <div class="feature-item" @click="alertNotReady">
+      <div class="feature-item" @click="goRecommendation">
         <h3>📋 맞춤 추천</h3>
         <p>증상과 목적에 맞는<br>영양제를 찾으세요</p>
       </div>
