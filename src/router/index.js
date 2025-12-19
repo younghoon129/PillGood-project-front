@@ -11,6 +11,10 @@ import LoginView from "@/views/LoginView.vue";
 import SignupView from "@/views/SignupView.vue";
 import KakaoCallbackView from "@/views/KakaoCallbackView.vue";
 import NaverCallbackView from "@/views/NaverCallbackView.vue";
+import RecommendationView from "@/views/pills/RecommendationView.vue";
+import IngredientListView from "@/views/pills/IngredientListView.vue";
+import IngredientDetailView from "@/views/pills/IngredientDetailView.vue";
+import SubstancePillsView from "@/views/pills/SubstancePillsView.vue";
 import MyPageView from "@/views/MyPageView.vue";
 
 const router = createRouter({
@@ -58,6 +62,7 @@ const router = createRouter({
       name: "pills_index",
       component: PillIndexView,
     },
+
     {
       path: "/pills/:pill_pk",
       name: "pill_detail",
@@ -79,6 +84,26 @@ const router = createRouter({
           component: ThreadDetailView,
         },
       ],
+    },
+    {
+      path: "/recommendation",
+      name: "recommendation",
+      component: RecommendationView,
+    },
+    {
+      path: "/recommendation/:categoryId",
+      name: "ingredient-list",
+      component: IngredientListView,
+    },
+    {
+      path: "/ingredient/:substanceId",
+      name: "ingredient-detail",
+      component: IngredientDetailView,
+    },
+    {
+      path: "/ingredient/:substanceId/pills",
+      name: "substance-pills",
+      component: SubstancePillsView,
     },
   ],
 });

@@ -25,10 +25,7 @@ const fetchPills = (page) => {
   }
   store.getPills(page, params)
   
-  // 페이지 이동 시 스크롤을 맨 위로 올리고 싶다면 아래 주석 해제
-  // 1번 방법: 다음 페이지 누르면 위로 바로 이동
-  // window.scrollTo(0, 0)
-  // 2번 방법: 부드럽게 스크롤 이동
+  // 페이지 이동 시 부드럽게 스크롤 이동
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
@@ -47,20 +44,15 @@ const resetSearch = () => {
 
 // ▼▼▼ 5. 페이지네이션 로직 (Computed) ▼▼▼
 
-// 전체 페이지 수 계산 (한 페이지당 20개 기준)
-// store.count는 Store 수정 단계에서 추가된 전체 데이터 개수입니다.
 const totalPages = computed(() => {
   if (!store.count) return 0
   return Math.ceil(store.count / 20)
 })
 
-// 현재 페이지 그룹 계산 (9개씩 묶음)
-// 0그룹: 1~9페이지, 1그룹: 10~18페이지 ...
 const currentGroup = computed(() => {
   return Math.ceil(currentPage.value / 9) - 1
 })
 
-// 화면에 보여줄 페이지 번호 리스트 (예: [1,2,3...9] 또는 [10,11...18])
 const pageNumbers = computed(() => {
   const start = currentGroup.value * 9 + 1
   const end = Math.min(start + 8, totalPages.value)
@@ -72,11 +64,9 @@ const pageNumbers = computed(() => {
   return pages
 })
 
-// 이전/다음 그룹 존재 여부
 const hasPrevGroup = computed(() => currentGroup.value > 0)
 const hasNextGroup = computed(() => (currentGroup.value + 1) * 9 < totalPages.value)
 
-// 다음 그룹으로 이동 (예: 9페이지 -> > 버튼 -> 10페이지)
 const moveToNextGroup = () => {
   const nextGroupStartPage = (currentGroup.value + 1) * 9 + 1
   if (nextGroupStartPage <= totalPages.value) {
@@ -84,7 +74,6 @@ const moveToNextGroup = () => {
   }
 }
 
-// 이전 그룹으로 이동 (예: 10페이지 -> < 버튼 -> 1페이지)
 const moveToPrevGroup = () => {
   const prevGroupStartPage = (currentGroup.value - 1) * 9 + 1
   if (prevGroupStartPage >= 1) {
@@ -129,24 +118,27 @@ onMounted(() => {
       </div>
 
       <div class="filter-box">
-        <span class="filter-label">제형 선택</span>
-        <div class="checkbox-group">
+        <div class="filter-label-area">
+          <span class="label-icon">💊</span>
+          <span class="filter-label">제형 선택</span>
+        </div>
+        <div class="chips-group">
           <label 
             v-for="shape in shapeOptions" 
             :key="shape" 
-            class="checkbox-item"
+            class="chip-item"
           >
             <input 
               type="checkbox" 
               :value="shape" 
               v-model="selectedShapes"
+              class="chip-input" 
             >
-            {{ shape }}
+            <span class="chip-label">{{ shape }}</span>
           </label>
         </div>
       </div>
-
-    </div>
+      </div>
 
     <div class="pill-list">
       <PillCard 
@@ -186,7 +178,7 @@ onMounted(() => {
         &gt;
       </button>
     </div>
-    </div>
+  </div>
 </template>
 
 <style scoped>
@@ -283,50 +275,81 @@ onMounted(() => {
   border-color: #ced4da;
 }
 
+/* ▼▼▼ [수정됨] 필터 박스 및 칩 스타일 ▼▼▼ */
 .filter-box {
   background-color: #f8f9fa;
   border: 1px solid #f1f3f5;
   border-radius: 16px;
   padding: 20px 30px;
   display: flex;
-  align-items: flex-start;
-  gap: 20px;
+  align-items: center; /* 세로 중앙 정렬 */
+  gap: 30px; /* 라벨과 칩 사이 간격 */
+}
+
+.filter-label-area {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 100px; /* 라벨 영역 너비 고정 */
+}
+
+.label-icon {
+  font-size: 1.2rem;
 }
 
 .filter-label {
   font-weight: 700;
   color: #343a40;
   white-space: nowrap;
-  margin-top: 2px;
 }
 
-.checkbox-group {
+/* 칩 그룹 컨테이너 */
+.chips-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 15px 20px;
+  gap: 10px;
+  flex: 1; /* 남은 공간 모두 차지 */
 }
 
-.checkbox-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.chip-item {
   cursor: pointer;
-  font-size: 0.95rem;
+}
+
+/* 실제 체크박스 숨김 */
+.chip-input {
+  display: none;
+}
+
+/* 커스텀 칩 디자인 */
+.chip-label {
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: white; /* 배경 흰색으로 변경 */
+  border: 1px solid #dee2e6;
+  border-radius: 50px;
   color: #495057;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
-  transition: color 0.2s;
 }
 
-.checkbox-item:hover {
+/* 마우스 올렸을 때 */
+.chip-label:hover {
+  background-color: #e7f5ff;
+  border-color: #74c0fc;
   color: #1c7ed6;
+  transform: translateY(-1px);
 }
 
-.checkbox-item input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  accent-color: #1c7ed6;
-  cursor: pointer;
+/* 선택되었을 때 (Active) */
+.chip-input:checked + .chip-label {
+  background-color: #1c7ed6;
+  border-color: #1c7ed6;
+  color: white;
+  box-shadow: 0 4px 6px rgba(28, 126, 214, 0.2);
 }
+/* ▲▲▲ 스타일 수정 끝 ▲▲▲ */
 
 .pill-list {
   display: grid;
@@ -353,11 +376,12 @@ onMounted(() => {
   }
   .filter-box {
     flex-direction: column;
-    gap: 10px;
+    align-items: flex-start; /* 모바일은 왼쪽 정렬 */
+    gap: 15px;
   }
 }
 
-/* ▼▼▼ 페이지네이션 스타일 추가 ▼▼▼ */
+/* 페이지네이션 스타일 유지 */
 .pagination {
   display: flex;
   justify-content: center;
@@ -378,7 +402,6 @@ onMounted(() => {
   font-weight: 600;
   transition: all 0.2s;
   
-  /* 숫자가 중앙에 오도록 */
   display: flex;
   justify-content: center;
   align-items: center;
