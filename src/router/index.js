@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
 import HomeView from "@/views/HomeView.vue";
 
 import PillIndexView from "@/views/pills/PillsIndexView.vue";
@@ -10,6 +11,7 @@ import LoginView from "@/views/LoginView.vue";
 import SignupView from "@/views/SignupView.vue";
 import KakaoCallbackView from "@/views/KakaoCallbackView.vue";
 import NaverCallbackView from "@/views/NaverCallbackView.vue";
+import MyPageView from "@/views/MyPageView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -33,6 +35,12 @@ const router = createRouter({
       path: "/signup",
       name: "Signup",
       component: SignupView,
+    },
+    {
+      path: "/profile",
+      name: "MyPage",
+      component: MyPageView,
+      meta: { requiresAuth: true },
     },
     // {
     //   path: '/profile/:username',
@@ -73,6 +81,17 @@ const router = createRouter({
       ],
     },
   ],
+});
+
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore();
+  if (to.meta.requiresAuth && !authStore.isLoggedIn) {
+    alert("권한이 없습니다. 로그인이 필요한 서비스입니다!");
+
+    next({ name: "Login", query: { redirect: to.fullPath } });
+  } else {
+    next();
+  }
 });
 
 export default router;

@@ -12,6 +12,12 @@ export const useAuthStore = defineStore("auth", {
     isLoggedIn: (state) => !!state.token,
   },
   actions: {
+    // 앱 초기화시 토큰 설정
+    initializeAuth() {
+      if (this.token) {
+        axios.defaults.headers.common["Authorization"] = `Token ${this.token}`;
+      }
+    },
     // 회원가입
     async signup(payload) {
       try {

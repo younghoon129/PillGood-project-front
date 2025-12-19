@@ -15,7 +15,7 @@ const signupData = ref({
   passwordConfirm: "",
   email: "",
   gender: "M",
-  age: null,
+  age: 20,
   interested_genres: [],
 });
 
@@ -67,6 +67,16 @@ onMounted(async () => {
             v-model="signupData.username"
             type="text"
             placeholder="사용할 아이디 입력"
+          />
+        </div>
+        <div class="field full">
+          <label for="email">이메일</label>
+          <input
+            type="email"
+            id="email"
+            v-model="signupData.email"
+            placeholder="example@pillgood.com"
+            required
           />
         </div>
 

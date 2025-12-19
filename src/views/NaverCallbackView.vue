@@ -22,7 +22,6 @@ onMounted(async () => {
         }
       );
       authStore.saveToken(response.data);
-      alert("네이버 로그인 성공! 🍀");
       router.push({ name: "Home" });
     } catch (err) {
       alert("네이버 로그인 실패");

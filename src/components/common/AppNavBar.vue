@@ -1,7 +1,15 @@
 <script setup>
 import { RouterLink } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import { useRouter } from "vue-router";
+
 const authStore = useAuthStore();
+const router = useRouter();
+
+const handleLogout = () => {
+  authStore.logout();
+  router.push({ name: "Home" });
+};
 </script>
 
 <template>
@@ -25,13 +33,13 @@ const authStore = useAuthStore();
       </template>
 
       <template v-else>
-        <span class="nav-link"
-          ><strong>{{ authStore.nickname }}</strong
-          >님</span
+        <RouterLink :to="{ name: 'MyPage' }" class="nav-link">
+          <span class="nav-link"
+            ><strong>{{ authStore.nickname }}</strong
+            >님</span
+          ></RouterLink
         >
-        <a href="#" @click.prevent="authStore.logout" class="nav-link"
-          >로그아웃</a
-        >
+        <a href="#" @click.prevent="handleLogout" class="nav-link">로그아웃</a>
       </template>
     </div>
   </nav>
