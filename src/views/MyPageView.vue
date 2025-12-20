@@ -330,6 +330,16 @@ const allPills = computed(() => {
 const showModal = ref(false);
 const newCustomPill = ref({ name: "", brand: "", memo: "" });
 
+const refreshAllPills = async () => {
+  try {
+    // 두 API 호출을 동시에 실행하고 모두 완료될 때까지 기다립니다.
+    await Promise.all([fetchMyPills(), fetchCustomPills()]);
+    console.log("모든 영양제 리스트가 갱신되었습니다. ✨");
+  } catch (err) {
+    console.error("리스트 갱신 중 오류 발생:", err);
+  }
+};
+
 const handleCustomRegister = async () => {
   if (!newCustomPill.value.name) {
     alert("이름을 입력해주세요!");
@@ -341,11 +351,37 @@ const handleCustomRegister = async () => {
       newCustomPill.value,
       config
     );
-    alert("등록되었습니다!");
+
+    alert("등록되었습니다! ✨");
     showModal.value = false;
-    fetchMyPills(); // 목록 새로고침
+
+    // 🚩 보완: 다음 등록을 위해 입력창 데이터 초기화
+    newCustomPill.value = { name: "", brand: "", memo: "" };
+
+    // 리스트 최신화
+    await refreshAllPills();
   } catch (err) {
-    console.error(err);
+    console.error("등록 실패:", err);
+  }
+};
+
+const removePill = async (item) => {
+  if (!confirm(`[${item.name}] 영양제를 삭제하시겠습니까?`)) return;
+
+  try {
+    const url =
+      item.type === "custom"
+        ? `http://localhost:8000/pills/custom-pills/${item.id}/`
+        : `http://localhost:8000/pills/${item.pill_id}/toggle/`;
+
+    await axios.delete(url, config);
+
+    await refreshAllPills();
+
+    alert("영양제함에서 삭제되었습니다.");
+  } catch (err) {
+    console.error("삭제 실패:", err);
+    alert("삭제 중 오류가 발생했습니다.");
   }
 };
 
@@ -365,27 +401,6 @@ const goToDetail = (pillId) => {
   // 영양제 상세 페이지의 라우터 경로가 '/pills/:pill_pk'라고 가정합니다.
   // name을 사용하신다면 router.push({ name: 'PillDetail', params: { pill_pk: pillId } })
   router.push(`/pills/${pillId}`);
-};
-
-const removePill = async (item) => {
-  if (!confirm(`[${item.name}] 영양제를 삭제하시겠습니까?`)) return;
-
-  try {
-    const url =
-      item.type === "custom"
-        ? `http://localhost:8000/pills/custom-pills/${item.id}/` // 커스텀 영양제 삭제 주소
-        : `http://localhost:8000/pills/${item.pill_id}/toggle/`; // DB 영양제 삭제 주소
-
-    await axios.delete(url, config);
-
-    fetchMyPills();
-    fetchCustomPills();
-
-    alert("영양제함에서 삭제되었습니다.");
-  } catch (err) {
-    console.error("삭제 실패:", err);
-    alert("삭제 중 오류가 발생했습니다.");
-  }
 };
 
 const config = {
