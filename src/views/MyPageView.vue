@@ -89,6 +89,40 @@
                     </div>
 
                     <div class="input-group">
+                      <label>주요 성분 선택 (중복 분석용)</label>
+
+                      <div class="selected-tags">
+                        <span
+                          v-for="(ing, idx) in selectedIngredients"
+                          :key="idx"
+                          class="ing-tag"
+                        >
+                          {{ ing }}
+                          <i class="bi bi-x" @click="removeIngredient(idx)"></i>
+                        </span>
+                      </div>
+
+                      <div class="search-wrap">
+                        <input
+                          v-model="ingredientSearch"
+                          placeholder="성분명 검색 (예: 비타민C)"
+                        />
+                        <ul
+                          v-if="filteredIngredients.length"
+                          class="autocomplete-list"
+                        >
+                          <li
+                            v-for="name in filteredIngredients"
+                            :key="name"
+                            @click="addIngredient(name)"
+                          >
+                            {{ name }}
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div class="input-group">
                       <label>복용 메모</label>
                       <textarea
                         v-model="newCustomPill.memo"
@@ -289,6 +323,33 @@ const allAllergyOptions = ref([]); // 🚩 알러지 전체 목록을 위한 ref
 const myPills = ref([]);
 const myCustomPills = ref([]);
 
+const allIngredients = ref([]); // 서버에서 받은 전체 성분 리스트
+const ingredientSearch = ref(""); // 사용자 검색어
+const selectedIngredients = ref([]); // 현재 선택된 성분들(배열)
+
+// 1. 성분 리스트 불러오기
+const fetchIngredients = async () => {
+  const res = await axios.get("http://localhost:8000/pills/all-ingredients/");
+  allIngredients.value = res.data;
+};
+
+// 2. 검색어에 따른 자동완성 필터링 (최대 10개 표시)
+const filteredIngredients = computed(() => {
+  const query = ingredientSearch.value.trim();
+  if (!query) return [];
+  return allIngredients.value
+    .filter((name) => name.includes(query))
+    .filter((name) => !selectedIngredients.value.includes(name)) // 이미 선택한 건 제외
+    .slice(0, 10);
+});
+
+// 3. 성분 추가/삭제 함수
+const addIngredient = (name) => {
+  selectedIngredients.value.push(name);
+  ingredientSearch.value = ""; // 입력창 비우기
+};
+const removeIngredient = (idx) => selectedIngredients.value.splice(idx, 1);
+
 const fetchCustomPills = async () => {
   try {
     const response = await axios.get(
@@ -341,27 +402,40 @@ const refreshAllPills = async () => {
 };
 
 const handleCustomRegister = async () => {
+  // 1. 유효성 검사 (가장 먼저 수행)
   if (!newCustomPill.value.name) {
-    alert("이름을 입력해주세요!");
+    alert("영양제 이름을 입력해주세요! 💊");
     return;
   }
+
   try {
+    // 2. 데이터 가공 (선택된 성분 배열을 쉼표 문자열로 변환)
+    const payload = {
+      ...newCustomPill.value,
+      ingredients: selectedIngredients.value.join(", "),
+    };
+
+    // 3. 서버 전송
     await axios.post(
       "http://localhost:8000/pills/custom-pills/",
-      newCustomPill.value,
+      payload,
       config
     );
 
-    alert("등록되었습니다! ✨");
+    // 4. 성공 처리
+    alert("나의 영양제함에 등록되었습니다! ✨");
     showModal.value = false;
 
-    // 🚩 보완: 다음 등록을 위해 입력창 데이터 초기화
+    // 5. 데이터 초기화 (입력창 + 선택된 성분 태그들)
     newCustomPill.value = { name: "", brand: "", memo: "" };
+    selectedIngredients.value = []; // 🚩 성분 태그 초기화 추가
+    ingredientSearch.value = "";
 
-    // 리스트 최신화
+    // 6. 리스트 최신화
     await refreshAllPills();
   } catch (err) {
     console.error("등록 실패:", err);
+    alert("등록 중 오류가 발생했습니다.");
   }
 };
 
@@ -465,6 +539,7 @@ onMounted(() => {
   fetchAllAllergies();
   fetchMyPills();
   fetchCustomPills();
+  fetchIngredients();
 });
 
 const enterEditMode = () => {
@@ -1076,5 +1151,64 @@ const moveToDeletePage = () => {
   justify-content: center;
   flex-wrap: wrap; /* 뱃지와 이름이 자연스럽게 섞이도록 */
   gap: 4px;
+}
+
+/* 성분 선택 관련 스타일 */
+.selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.ing-tag {
+  background: #f0fdf4; /* 연한 초록색 배경 */
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ing-tag i {
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.search-wrap {
+  position: relative;
+}
+
+.autocomplete-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  z-index: 50; /* 모달 내부에서 가장 위에 뜨도록 */
+  list-style: none;
+  padding: 5px 0;
+  margin-top: 5px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.autocomplete-list li {
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.autocomplete-list li:hover {
+  background: #f8fafc;
+  color: #42b983;
 }
 </style>

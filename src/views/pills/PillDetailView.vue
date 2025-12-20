@@ -16,6 +16,75 @@ const showReviews = ref(false);
 
 const isEnrolled = ref(false); // 현재 영양제함에 있는지 여부
 
+const myPills = ref([]); // 내 일반 영양제함 리스트
+const myCustomPills = ref([]); // 내 커스텀 영양제함 리스트
+
+//  영양제함에 들어있는지 확인 및 중복 체크
+// 🚩 1. 내 모든 영양제 데이터 로드 (중복 분석용)
+const fetchMyCabinet = async () => {
+  if (!authStore.isLoggedIn) return;
+  try {
+    const config = { headers: { Authorization: `Token ${authStore.token}` } };
+    const [res1, res2] = await Promise.all([
+      axios.get("http://localhost:8000/pills/my-pills/", config),
+      axios.get("http://localhost:8000/pills/custom-pills/", config),
+    ]);
+    myPills.value = res1.data;
+    myCustomPills.value = res2.data;
+  } catch (err) {
+    console.error("함 데이터 로드 실패:", err);
+  }
+};
+
+// 🚩 2. 중복 성분 분석 계산 로직
+const duplicateNutrients = computed(() => {
+  // 현재 보고 있는 영양제의 성분 정보가 없으면 빈 배열 반환
+  if (!store.pill || !store.pill.nutrient_details) return [];
+
+  // 현재 영양제의 성분 이름들 (예: ['비타민C', '아연'])
+  const currentIngredients = store.pill.nutrient_details.map(
+    (n) => n.substance_name
+  );
+  const duplicates = [];
+
+  // A. 일반 영양제(DB)와 비교
+  myPills.value.forEach((item) => {
+    // 현재 보고 있는 제품 본인은 비교에서 제외
+    if (item.pill.id === store.pill.id) return;
+
+    item.pill.nutrient_details?.forEach((nut) => {
+      if (currentIngredients.includes(nut.substance_name)) {
+        duplicates.push({
+          nutrient: nut.substance_name,
+          pillName: item.pill.PRDLST_NM,
+          type: "일반",
+        });
+      }
+    });
+  });
+
+  // B. 직접 등록한 영양제(Custom)와 비교
+  myCustomPills.value.forEach((item) => {
+    if (!item.ingredients) return;
+
+    // 저장된 "비타민C, 아연" 문자열을 배열로 변환
+    const customIngs = item.ingredients.split(",").map((s) => s.trim());
+
+    customIngs.forEach((ing) => {
+      if (currentIngredients.includes(ing)) {
+        duplicates.push({
+          nutrient: ing,
+          pillName: item.name,
+          type: "개인",
+        });
+      }
+    });
+  });
+
+  // 결과에서 중복으로 쌓인 데이터 정제 (선택사항: 같은 성분이 여러 제품에 있을 수 있음)
+  return duplicates;
+});
+
 // 🚩 추가: 현재 영양제가 내 함에 있는지 확인하는 함수
 const checkEnrollmentStatus = async () => {
   if (!authStore.isLoggedIn) return;
@@ -112,6 +181,7 @@ onMounted(async () => {
 
   // 페이지 로드 시 , 영양제가 사용자 영양제함에 있는지 확인
   checkEnrollmentStatus();
+  fetchMyCabinet();
 
   // 🚩 유저의 최신 알러지 정보를 가져오기 위해 프로필 요청 추가
   if (authStore.isLoggedIn) {
@@ -155,6 +225,35 @@ onMounted(async () => {
           </div>
         </div>
       </div>
+
+      <div
+        v-if="duplicateNutrients.length > 0"
+        class="duplicate-warning-banner"
+      >
+        <div class="banner-content">
+          <div class="warning-icon yellow">
+            <i class="bi bi-exclamation-circle-fill">!</i>
+          </div>
+          <div class="warning-text">
+            <h4>중복 섭취 주의</h4>
+            <p>
+              현재 섭취 중인 제품과 성분이 겹칩니다. 과다 섭취에 주의하세요!
+            </p>
+
+            <div class="duplicate-list">
+              <div
+                v-for="(item, idx) in duplicateNutrients"
+                :key="idx"
+                class="duplicate-item"
+              >
+                • <span class="dup-nut">{{ item.nutrient }}</span>
+                <span class="dup-pill">({{ item.pillName }})</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <section class="header-section">
         <div class="img-box">
           <img
@@ -685,5 +784,53 @@ onMounted(async () => {
   background: #42b983;
   color: white;
   border-color: #42b983;
+}
+
+/* 중복 섭취 스타일 */
+.duplicate-warning-banner {
+  background-color: #fffbeb; /* Amber 50 */
+  border: 1px solid #fef3c7; /* Amber 200 */
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.warning-icon.yellow {
+  background-color: #f59e0b; /* Amber 500 */
+  color: white;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.warning-text h4 {
+  margin: 0 0 6px 0;
+  color: #92400e;
+  font-weight: 800;
+}
+
+.duplicate-list {
+  padding: 10px;
+}
+
+.duplicate-item {
+  font-size: 0.9rem;
+  color: #b45309;
+  margin-bottom: 4px;
+}
+
+.dup-nut {
+  font-weight: 800;
+  text-decoration: underline;
+}
+
+.dup-pill {
+  font-size: 0.85rem;
+  color: #d97706;
 }
 </style>
