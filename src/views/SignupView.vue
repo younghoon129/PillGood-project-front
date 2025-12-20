@@ -17,6 +17,7 @@ const signupData = ref({
   gender: "M",
   age: 20,
   interested_genres: [],
+  allergies: [],
 });
 
 const isPasswordMatch = computed(() => {
@@ -24,34 +25,56 @@ const isPasswordMatch = computed(() => {
 });
 
 const categories = ref([]);
+const allergiesOptions = ref([]);
 
 const handleSignup = async () => {
-  // 비밀번호 불일치 시 차단
   if (!isPasswordMatch.value) {
     alert("비밀번호가 일치하지 않습니다!");
     return;
   }
 
   try {
-    // 백엔드에는 passwordConfirm을 보낼 필요가 없으므로
-    // 실제 전송할 데이터만 골라서 보냅니다 (구조 분해 할당)
     const { passwordConfirm, ...payload } = signupData.value;
     await authStore.signup(payload);
 
     alert("회원가입 성공! 🎉");
     router.push({ name: "Home" });
   } catch (err) {
-    alert("입력 정보를 다시 확인해주세요.");
+    // 🚩 서버에서 보낸 상세 에러 메시지가 있는지 확인
+    if (err.response && err.response.data) {
+      const errorData = err.response.data;
+
+      // 1. 아이디 중복 에러가 있는 경우
+      if (errorData.username) {
+        alert(`아이디 오류: ${errorData.username[0]}`);
+      }
+      // 2. 이메일 중복 에러가 있는 경우
+      else if (errorData.email) {
+        alert(`이메일 오류: ${errorData.email[0]}`);
+      }
+      // 3. 기타 유효성 검사 에러
+      else {
+        alert("입력하신 정보를 다시 확인해주세요.");
+      }
+    } else {
+      // 서버 연결 자체가 실패한 경우 등
+      alert("서버와 통신 중 오류가 발생했습니다.");
+    }
   }
 };
 
 // 카테고리 목록을 백엔드에서 가져옴
 onMounted(async () => {
   try {
-    const response = await axios.get("http://localhost:8000/pills/categories/");
-    categories.value = response.data;
+    const [catRes, allergyRes] = await Promise.all([
+      axios.get("http://localhost:8000/pills/categories/"),
+      axios.get("http://localhost:8000/accounts/allergies/"),
+    ]);
+
+    categories.value = catRes.data;
+    allergiesOptions.value = allergyRes.data;
   } catch (err) {
-    console.error("카테고리 목록을 불러오는데 실패했습니다.", err);
+    console.error("데이터를 불러오는데 실패했습니다.", err);
   }
 });
 </script>
@@ -160,6 +183,30 @@ onMounted(async () => {
               <div class="cat-chip">
                 <span class="check-icon">✓</span>
                 {{ cat.name }}
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="field full mt-3">
+          <label class="section-label allergy-label"
+            >보유 중인 알러지
+            <span class="sub-text">(해당 성분 선택)</span></label
+          >
+          <div class="category-grid">
+            <label
+              v-for="allergy in allergiesOptions"
+              :key="allergy.id"
+              class="cat-item"
+            >
+              <input
+                type="checkbox"
+                :value="allergy.id"
+                v-model="signupData.allergies"
+                class="hidden-checkbox"
+              />
+              <div class="cat-chip allergy-chip">
+                {{ allergy.name }}
               </div>
             </label>
           </div>
@@ -347,5 +394,26 @@ onMounted(async () => {
   .signup-card {
     padding: 25px;
   }
+}
+
+/* 알러지 선택  */
+.allergy-label {
+  color: #e11d48; /* Red/Rose 계열 */
+}
+
+.cat-chip.allergy-chip {
+  border-color: #fff1f2;
+}
+
+/* 알러지 체크박스 체크 시 스타일 */
+.hidden-checkbox:checked + .cat-chip.allergy-chip {
+  background-color: #e11d48; /* 가입 버튼과 차별화되는 경고 레드 */
+  border-color: #e11d48;
+  color: white;
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.2);
+}
+
+.mt-3 {
+  margin-top: 24px;
 }
 </style>
