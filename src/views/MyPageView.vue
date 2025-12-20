@@ -49,6 +49,95 @@
           <CalendarRegisterForm />
           <br />
 
+          <div class="cabinet-section">
+            <div class="cabinet-header">
+              <h3>📦 나의 영양제함</h3>
+              <button @click="showModal = true" class="add-manual-btn">
+                + 직접 등록
+              </button>
+            </div>
+
+            <Transition name="modal">
+              <div
+                v-if="showModal"
+                class="modal-overlay"
+                @click.self="showModal = false"
+              >
+                <div class="modal-card">
+                  <div class="modal-header">
+                    <h4>✨ 영양제 직접 등록</h4>
+                    <button class="close-btn" @click="showModal = false">
+                      &times;
+                    </button>
+                  </div>
+
+                  <div class="modal-body">
+                    <div class="input-group">
+                      <label>제품명 <span class="required">*</span></label>
+                      <input
+                        v-model="newCustomPill.name"
+                        placeholder="예: 해외직구 오메가3"
+                      />
+                    </div>
+
+                    <div class="input-group">
+                      <label>제조사/브랜드</label>
+                      <input
+                        v-model="newCustomPill.brand"
+                        placeholder="예: 스포츠리서치"
+                      />
+                    </div>
+
+                    <div class="input-group">
+                      <label>복용 메모</label>
+                      <textarea
+                        v-model="newCustomPill.memo"
+                        placeholder="예: 아침 식사 직후 1알 복용"
+                        rows="3"
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  <div class="modal-footer">
+                    <button class="btn-cancel" @click="showModal = false">
+                      취소
+                    </button>
+                    <button class="btn-submit" @click="handleCustomRegister">
+                      등록하기
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </Transition>
+
+            <div v-if="allPills && allPills.length > 0" class="pill-grid">
+              <div
+                v-for="item in allPills"
+                :key="item.type + item.id"
+                class="pill-card"
+                @click="item.type === 'db' ? goToDetail(item.pill_id) : null"
+              >
+                <img :src="item.img || defaultImg" class="mini-pill-img" />
+
+                <div class="pill-info">
+                  <p class="name">
+                    <span v-if="item.type === 'custom'" class="badge-custom"
+                      >개인</span
+                    >
+                    {{ item.name }}
+                  </p>
+                  <button @click.stop="removePill(item)" class="remove-btn">
+                    <i class="bi bi-trash"></i> 삭제
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <p v-else class="empty-msg">현재 섭취 중인 영양제가 없습니다.</p>
+          </div>
+
+          <br />
+
           <div class="category-section mb-3">
             <span class="label">나의 관심 건강 카테고리</span>
             <div
@@ -66,6 +155,7 @@
             <div v-else class="empty-tag">설정된 관심 카테고리가 없습니다.</div>
           </div>
           <br />
+
           <div class="category-section allergy-section">
             <span class="label">나의 알러지 정보</span>
             <div
@@ -184,6 +274,7 @@ import axios from "axios";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import CalendarRegisterForm from "@/components/CalendarRegisterForm.vue";
+import defaultImg from "@/assets/pill.jpg";
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -194,6 +285,108 @@ const editedData = ref({ interested_genres: [], allergies: [] });
 
 const allCategoryOptions = ref([]);
 const allAllergyOptions = ref([]); // 🚩 알러지 전체 목록을 위한 ref
+
+const myPills = ref([]);
+const myCustomPills = ref([]);
+
+const fetchCustomPills = async () => {
+  try {
+    const response = await axios.get(
+      "http://localhost:8000/pills/custom-pills/",
+      config
+    );
+    myCustomPills.value = response.data;
+  } catch (err) {
+    console.error("커스텀 영양제 로드 실패:", err);
+  }
+};
+
+const allPills = computed(() => {
+  // 1. 일반 영양제 데이터 가공
+  const dbList = myPills.value.map((item) => ({
+    id: item.id, // UserPill 모델의 PK (삭제 시 필요할 수 있음)
+    pill_id: item.pill?.id, // 🚩 실제 영양제 상세페이지로 갈 때 쓰는 ID
+    name: item.pill?.PRDLST_NM || "이름 정보 없음",
+    img: item.pill?.cover || defaultImg,
+    type: "db",
+    created_at: item.created_at,
+  }));
+
+  // 2. 커스텀 영양제 데이터 가공
+  const customList = myCustomPills.value.map((item) => ({
+    id: item.id,
+    pill_id: null, // 커스텀은 상세페이지가 없음
+    name: item.name,
+    img: defaultImg,
+    type: "custom",
+    created_at: item.created_at,
+  }));
+
+  return [...dbList, ...customList].sort(
+    (a, b) => new Date(b.created_at) - new Date(a.created_at)
+  );
+});
+
+const showModal = ref(false);
+const newCustomPill = ref({ name: "", brand: "", memo: "" });
+
+const handleCustomRegister = async () => {
+  if (!newCustomPill.value.name) {
+    alert("이름을 입력해주세요!");
+    return;
+  }
+  try {
+    await axios.post(
+      "http://localhost:8000/pills/custom-pills/",
+      newCustomPill.value,
+      config
+    );
+    alert("등록되었습니다!");
+    showModal.value = false;
+    fetchMyPills(); // 목록 새로고침
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const fetchMyPills = async () => {
+  try {
+    const response = await axios.get(
+      "http://localhost:8000/pills/my-pills/",
+      config
+    );
+    myPills.value = response.data; // 서버에서 받아온 리스트 저장
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const goToDetail = (pillId) => {
+  // 영양제 상세 페이지의 라우터 경로가 '/pills/:pill_pk'라고 가정합니다.
+  // name을 사용하신다면 router.push({ name: 'PillDetail', params: { pill_pk: pillId } })
+  router.push(`/pills/${pillId}`);
+};
+
+const removePill = async (item) => {
+  if (!confirm(`[${item.name}] 영양제를 삭제하시겠습니까?`)) return;
+
+  try {
+    const url =
+      item.type === "custom"
+        ? `http://localhost:8000/pills/custom-pills/${item.id}/` // 커스텀 영양제 삭제 주소
+        : `http://localhost:8000/pills/${item.pill_id}/toggle/`; // DB 영양제 삭제 주소
+
+    await axios.delete(url, config);
+
+    fetchMyPills();
+    fetchCustomPills();
+
+    alert("영양제함에서 삭제되었습니다.");
+  } catch (err) {
+    console.error("삭제 실패:", err);
+    alert("삭제 중 오류가 발생했습니다.");
+  }
+};
 
 const config = {
   headers: { Authorization: `Token ${authStore.token}` },
@@ -254,7 +447,9 @@ const fetchProfile = async () => {
 onMounted(() => {
   fetchProfile();
   fetchAllCategories();
-  fetchAllAllergies(); // 🚩 마운트 시 호출
+  fetchAllAllergies();
+  fetchMyPills();
+  fetchCustomPills();
 });
 
 const enterEditMode = () => {
@@ -538,7 +733,7 @@ const moveToDeletePage = () => {
   transition: 0.2s;
 }
 .edit-btn {
-  background: #1e293b;
+  background: #518dee;
   color: white;
   margin-top: 20px;
 }
@@ -579,5 +774,292 @@ const moveToDeletePage = () => {
   color: #e11d48;
   text-decoration: underline;
   text-underline-offset: 4px;
+}
+
+/* 사용자 영양제함 스타일 */
+.cabinet-section {
+  padding: 25px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+}
+
+.cabinet-section h3 {
+  margin-top: 0;
+}
+
+.pill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.pill-card {
+  background: white;
+  border: 1px solid #f1f5f9;
+  border-radius: 16px;
+  padding: 15px;
+  text-align: center;
+  transition: transform 0.2s;
+}
+
+.pill-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.mini-pill-img {
+  width: 100%;
+  height: 100px;
+  object-fit: contain;
+  margin-bottom: 10px;
+}
+
+.pill-info .name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  /* 두 줄 이상이면 생략 처리(...) */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.remove-btn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 6px 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ef4444;
+  background: #fff1f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.remove-btn:hover {
+  background: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+/* 모달 기본 스타일 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 350px;
+}
+
+/* 모달 애니메이션 (Vue Transition) */
+.modal-enter-active,
+.modal-leave-active {
+  transition: all 0.3s ease;
+}
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+/* 오버레이: 배경 흐림 효과 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.6); /* 진한 네이비톤 반투명 */
+  backdrop-filter: blur(8px); /* 글래스모피즘 핵심 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+/* 모달 카드 */
+.modal-card {
+  background: white;
+  width: 90%;
+  max-width: 450px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* 헤더 */
+.modal-header {
+  padding: 24px 24px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-header h4 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1e293b;
+}
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+/* 바디 & 입력창 */
+.modal-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.input-group label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #475569;
+}
+.required {
+  color: #ef4444;
+}
+
+.input-group input,
+.input-group textarea {
+  padding: 12px 16px;
+  border: 2px solid #f1f5f9;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+.input-group input:focus,
+.input-group textarea:focus {
+  outline: none;
+  border-color: #42b983; /* 포인트 컬러 */
+  background: #f0fdf4;
+}
+
+/* 푸터 버튼 */
+.modal-footer {
+  padding: 16px 24px 24px;
+  display: flex;
+  gap: 12px;
+}
+.btn-cancel,
+.btn-submit {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-cancel {
+  background: #f1f5f9;
+  color: #64748b;
+  border: none;
+}
+.btn-cancel:hover {
+  background: #e2e8f0;
+}
+
+.btn-submit {
+  background: #42b983;
+  color: white;
+  border: none;
+}
+.btn-submit:hover {
+  background: #38a169;
+  box-shadow: 0 4px 12px rgba(66, 185, 131, 0.3);
+}
+
+/* 1. 나의 영양제함 헤더 레이아웃 */
+.cabinet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* 2. 직접 등록 버튼 스타일 */
+.add-manual-btn {
+  background-color: #f8fafc;
+  border: 1px dashed #cbd5e1; /* 점선 테두리로 '추가' 느낌 강조 */
+  color: #475569;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.add-manual-btn:hover {
+  background-color: #f1f5f9;
+  border-color: #94a3b8;
+  color: #1e293b;
+  transform: translateY(-2px); /* 살짝 떠오르는 효과 */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* 3. 직접 등록 뱃지 스타일 */
+.badge-custom {
+  display: inline-block;
+  background-color: #64748b; /* 차분한 슬레이트 블루 톤 */
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 6px;
+  vertical-align: middle;
+  line-height: 1.4;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* 4. 커스텀 영양제 카드 변주 (선택 사항) */
+/* 직접 등록한 카드임을 더 강조하고 싶다면 사용하세요 */
+.pill-card {
+  position: relative;
+  overflow: hidden;
+}
+
+/* 5. 텍스트 줄바꿈 및 정렬 보정 */
+.pill-info .name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap; /* 뱃지와 이름이 자연스럽게 섞이도록 */
+  gap: 4px;
 }
 </style>

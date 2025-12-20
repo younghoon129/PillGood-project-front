@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, nextTick, ref, computed } from "vue";
+import { onMounted, nextTick, ref, computed, watch } from "vue";
 import { useRoute, RouterView } from "vue-router";
 import { usePillStore } from "@/stores/pills";
 import { useAuthStore } from "@/stores/auth";
@@ -10,7 +10,75 @@ const route = useRoute();
 const store = usePillStore();
 const authStore = useAuthStore();
 
+const reviewSection = ref(null);
+
 const showReviews = ref(false);
+
+const isEnrolled = ref(false); // 현재 영양제함에 있는지 여부
+
+// 🚩 추가: 현재 영양제가 내 함에 있는지 확인하는 함수
+const checkEnrollmentStatus = async () => {
+  if (!authStore.isLoggedIn) return;
+
+  try {
+    const response = await axios.get(
+      `http://localhost:8000/pills/${route.params.pill_pk}/is-enrolled/`,
+      { headers: { Authorization: `Token ${authStore.token}` } }
+    );
+    // 서버에서 받은 결과(true/false)를 변수에 저장
+    isEnrolled.value = response.data.is_enrolled;
+  } catch (err) {
+    console.error("상태 확인 실패:", err);
+  }
+};
+
+watch(
+  () => route.name,
+  async (newName) => {
+    if (newName === "thread_list") {
+      // 라우트가 바뀌고 DOM이 렌더링될 때까지 잠깐 대기
+      await nextTick();
+      scrollToReviews();
+    }
+  }
+);
+
+const scrollToReviews = () => {
+  // RouterView가 들어가는 위치나 후기 섹션으로 스크롤
+  if (reviewSection.value) {
+    reviewSection.value.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
+};
+
+const handleTogglePill = async () => {
+  if (!authStore.isLoggedIn) {
+    alert("로그인이 필요한 기능입니다.");
+    return;
+  }
+
+  try {
+    const method = isEnrolled.value ? "delete" : "post";
+    const config = { headers: { Authorization: `Token ${authStore.token}` } };
+
+    await axios({
+      method: method,
+      url: `http://localhost:8000/pills/${route.params.pill_pk}/toggle/`,
+      ...config,
+    });
+
+    isEnrolled.value = !isEnrolled.value;
+    alert(
+      isEnrolled.value
+        ? "영양제함에 담았습니다! 💊"
+        : "영양제함에서 삭제했습니다."
+    );
+  } catch (err) {
+    console.error(err);
+  }
+};
 
 //  [추가] 알러지 경고 로직
 const dangerAllergens = computed(() => {
@@ -41,6 +109,9 @@ const toggleReviews = async () => {
 onMounted(async () => {
   const pillId = route.params.pill_pk;
   store.getPillDetail(pillId);
+
+  // 페이지 로드 시 , 영양제가 사용자 영양제함에 있는지 확인
+  checkEnrollmentStatus();
 
   // 🚩 유저의 최신 알러지 정보를 가져오기 위해 프로필 요청 추가
   if (authStore.isLoggedIn) {
@@ -184,7 +255,7 @@ onMounted(async () => {
           <div v-else class="empty-text">해당 정보 없음</div>
         </div>
 
-        <div class="info-item">
+        <div class="info-item" ref="reviewSection">
           <h3>🌟 사용자 후기</h3>
           <div class="community-cta-container">
             <RouterLink
@@ -209,6 +280,14 @@ onMounted(async () => {
             </RouterLink>
           </div>
         </div>
+
+        <button
+          @click="handleTogglePill"
+          :class="['cabinet-btn', { 'is-taking': isEnrolled }]"
+        >
+          <i :class="isEnrolled ? 'bi bi-archive-fill' : 'bi bi-archive'"></i>
+          {{ isEnrolled ? "섭취 중인 영양제" : "영양제함에 담기" }}
+        </button>
       </section>
 
       <hr class="divider" />
@@ -590,5 +669,21 @@ onMounted(async () => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* 영양제함 담기 버튼 */
+.cabinet-btn {
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.cabinet-btn.is-taking {
+  background: #42b983;
+  color: white;
+  border-color: #42b983;
 }
 </style>
