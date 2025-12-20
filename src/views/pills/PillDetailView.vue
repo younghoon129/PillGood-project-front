@@ -793,6 +793,7 @@ onMounted(async () => {
   border-radius: 20px;
   padding: 24px;
   margin-bottom: 20px;
+  animation: slideDown 0.4s ease-out;
 }
 
 .warning-icon.yellow {
