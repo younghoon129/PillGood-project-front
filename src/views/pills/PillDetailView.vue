@@ -1,34 +1,62 @@
 <script setup>
-import { onMounted, nextTick, ref } from "vue";
+import { onMounted, nextTick, ref, computed } from "vue";
 import { useRoute, RouterView } from "vue-router";
 import { usePillStore } from "@/stores/pills";
-import defaultImg from "@/assets/pill.jpg"; // 기본 이미지 import
+import { useAuthStore } from "@/stores/auth";
+import defaultImg from "@/assets/pill.jpg";
+import axios from "axios";
 
 const route = useRoute();
 const store = usePillStore();
+const authStore = useAuthStore();
 
-// 🚩 [추가] 후기 영역 표시 상태 관리 변수
 const showReviews = ref(false);
 
-// 🚩 [추가] 토글 함수
+//  [추가] 알러지 경고 로직
+const dangerAllergens = computed(() => {
+  // 로그인하지 않았거나, 영양제 정보 또는 알러지 정보가 없으면 빈 배열 반환
+  if (!authStore.isLoggedIn || !store.pill || !store.pill.allergens_info)
+    return [];
+
+  // 1. 사용자가 마이페이지에서 등록한 알러지 이름들 (예: ['우유', '대두'])
+  const userAllergyNames = authStore.userInfo?.allergies_names || [];
+
+  // 2. 현재 영양제에 포함된 알러지 유발 성분 이름들 (예: ['우유', '밀'])
+  const pillAllergenNames = store.pill.allergens_info.map((a) => a.name);
+
+  // 3. 두 목록에서 겹치는 성분만 필터링하여 반환
+  return pillAllergenNames.filter((name) => userAllergyNames.includes(name));
+});
+
 const toggleReviews = async () => {
   showReviews.value = !showReviews.value;
-
-  // 펼쳐질 때 부드럽게 해당 위치로 스크롤 이동 (선택사항, UX 향상)
   if (showReviews.value) {
-    await nextTick(); // DOM 업데이트 후 실행
+    await nextTick();
     document
       .querySelector(".review-togglable-area")
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 };
 
-onMounted(() => {
-  // 1. URL에서 pill_pk 추출 (예: /pills/3 -> 3)
+onMounted(async () => {
   const pillId = route.params.pill_pk;
-
-  // 2. 스토어에 데이터 요청
   store.getPillDetail(pillId);
+
+  // 🚩 유저의 최신 알러지 정보를 가져오기 위해 프로필 요청 추가
+  if (authStore.isLoggedIn) {
+    try {
+      const response = await axios.get(
+        "http://localhost:8000/accounts/profile/",
+        {
+          headers: { Authorization: `Token ${authStore.token}` },
+        }
+      );
+      // 가져온 데이터를 authStore에 업데이트 (authStore에 setUserInfo 같은 액션이 있다고 가정)
+      authStore.userInfo = response.data;
+    } catch (err) {
+      console.error("유저 정보를 불러오지 못했습니다.", err);
+    }
+  }
 });
 </script>
 
@@ -39,6 +67,23 @@ onMounted(() => {
     </div>
 
     <div v-else class="detail-wrap">
+      <div v-if="dangerAllergens.length > 0" class="allergy-danger-banner">
+        <div class="banner-content">
+          <div class="warning-icon">
+            <i class="bi bi-exclamation-triangle-fill">!</i>
+          </div>
+          <div class="warning-text">
+            <h4>섭취 주의 알림</h4>
+            <p>
+              이 제품은 회원님이 등록하신
+              <span class="danger-highlight"
+                >[{{ dangerAllergens.join(", ") }}]</span
+              >
+              성분을 포함하고 있습니다.
+            </p>
+          </div>
+        </div>
+      </div>
       <section class="header-section">
         <div class="img-box">
           <img
@@ -483,6 +528,67 @@ onMounted(() => {
 
   .cta-label {
     font-size: 1rem;
+  }
+}
+
+/* 🚩 알러지 경고 배너 스타일 */
+.allergy-danger-banner {
+  background-color: #fff1f2; /* Rose 50 */
+  border: 1px solid #fecaca; /* Red 200 */
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 30px;
+  animation: slideDown 0.4s ease-out;
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.warning-icon {
+  width: 50px;
+  height: 50px;
+  background-color: #ef4444; /* Red 500 */
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  font-weight: 900;
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+}
+
+.warning-text h4 {
+  margin: 0 0 4px 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #991b1b; /* Red 800 */
+}
+
+.warning-text p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #b91c1c;
+  line-height: 1.5;
+}
+
+.danger-highlight {
+  font-weight: 900;
+  text-decoration: underline;
+  color: #dc2626;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 </style>

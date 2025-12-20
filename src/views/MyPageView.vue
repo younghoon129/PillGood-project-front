@@ -4,7 +4,7 @@
       <div class="card-header">
         <h2>마이페이지</h2>
         <p class="subtitle">
-          회원님의 정보를 관리하고 관심 건강 분야를 설정하세요.
+          회원님의 정보를 관리하고 관심 건강 분야 및 알러지를 설정하세요.
         </p>
       </div>
 
@@ -47,8 +47,9 @@
           </div>
 
           <CalendarRegisterForm />
-          <hr />
-          <div class="category-section">
+          <br />
+
+          <div class="category-section mb-3">
             <span class="label">나의 관심 건강 카테고리</span>
             <div
               class="tag-container"
@@ -62,14 +63,36 @@
                 # {{ name }}
               </span>
             </div>
-            <div v-else class="empty-tag">
-              설정된 관심 카테고리가 없습니다. 수정에서 추가해 보세요!
+            <div v-else class="empty-tag">설정된 관심 카테고리가 없습니다.</div>
+          </div>
+          <br />
+          <div class="category-section allergy-section">
+            <span class="label">나의 알러지 정보</span>
+            <div
+              class="tag-container"
+              v-if="profileData.allergies_names?.length"
+            >
+              <span
+                v-for="name in profileData.allergies_names"
+                :key="name"
+                class="allergy-tag"
+              >
+                <i class="bi bi-exclamation-circle-fill me-1"></i> # {{ name }}
+              </span>
             </div>
+            <div v-else class="empty-tag">등록된 알러지 정보가 없습니다.</div>
           </div>
         </div>
+
         <button @click="enterEditMode" class="main-btn edit-btn">
           프로필 수정하기
         </button>
+
+        <div class="withdrawal-area">
+          <button class="btn-text-danger" @click="moveToDeletePage">
+            회원 탈퇴
+          </button>
+        </div>
       </div>
 
       <div v-else class="edit-form">
@@ -101,7 +124,7 @@
         </div>
 
         <div class="category-edit-box">
-          <label class="label">관심 카테고리 수정 (중복 선택 가능)</label>
+          <label class="label">관심 카테고리 수정</label>
           <div class="checkbox-group">
             <label
               v-for="option in allCategoryOptions"
@@ -117,6 +140,27 @@
                 v-model="editedData.interested_genres"
               />
               {{ option.name }}
+            </label>
+          </div>
+        </div>
+
+        <div class="category-edit-box allergy-edit-box mt-3">
+          <label class="label">알러지 정보 수정 (해당 성분 선택)</label>
+          <div class="checkbox-group">
+            <label
+              v-for="allergy in allAllergyOptions"
+              :key="allergy.id"
+              :class="[
+                'checkbox-item allergy-item',
+                { active: editedData.allergies?.includes(allergy.id) },
+              ]"
+            >
+              <input
+                type="checkbox"
+                :value="allergy.id"
+                v-model="editedData.allergies"
+              />
+              {{ allergy.name }}
             </label>
           </div>
         </div>
@@ -137,14 +181,24 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import axios from "axios";
+import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import CalendarRegisterForm from "@/components/CalendarRegisterForm.vue";
 
+const router = useRouter();
 const authStore = useAuthStore();
+
 const profileData = ref(null);
-const allCategoryOptions = ref([]);
 const isEditMode = ref(false);
-const editedData = ref({ interested_genres: [] });
+const editedData = ref({ interested_genres: [], allergies: [] });
+
+const allCategoryOptions = ref([]);
+const allAllergyOptions = ref([]); // 🚩 알러지 전체 목록을 위한 ref
+
+const config = {
+  headers: { Authorization: `Token ${authStore.token}` },
+};
+
 const providerLabel = computed(() => {
   const providers = {
     kakao: "카카오 로그인",
@@ -162,21 +216,29 @@ const loginType = computed(() => {
   return "일반 로그인";
 });
 
-const config = {
-  headers: { Authorization: `Token ${authStore.token}` },
-};
-
-// 1. 전체 카테고리 목록 로드 (pills 앱의 API 호출)
+// 1. 전체 카테고리 로드
 const fetchAllCategories = async () => {
   try {
     const response = await axios.get("http://localhost:8000/pills/categories/");
     allCategoryOptions.value = response.data;
   } catch (err) {
-    console.error("카테고리 로드 실패:", err);
+    console.error(err);
   }
 };
 
-// 2. 프로필 정보 로드
+// 🚩 2. 전체 알러지 목록 로드 (새로 만든 API 호출)
+const fetchAllAllergies = async () => {
+  try {
+    const response = await axios.get(
+      "http://localhost:8000/accounts/allergies/"
+    );
+    allAllergyOptions.value = response.data;
+  } catch (err) {
+    console.error("알러지 로드 실패:", err);
+  }
+};
+
+// 3. 프로필 정보 로드
 const fetchProfile = async () => {
   try {
     const response = await axios.get(
@@ -185,13 +247,14 @@ const fetchProfile = async () => {
     );
     profileData.value = response.data;
   } catch (err) {
-    console.error("프로필 로드 실패:", err);
+    console.error(err);
   }
 };
 
 onMounted(() => {
   fetchProfile();
   fetchAllCategories();
+  fetchAllAllergies(); // 🚩 마운트 시 호출
 });
 
 const enterEditMode = () => {
@@ -200,6 +263,9 @@ const enterEditMode = () => {
     interested_genres: profileData.value.interested_genres
       ? [...profileData.value.interested_genres]
       : [],
+    allergies: profileData.value.allergies
+      ? [...profileData.value.allergies]
+      : [], // 🚩 초기값 설정
   };
   isEditMode.value = true;
 };
@@ -211,23 +277,56 @@ const updateProfile = async () => {
       editedData.value,
       config
     );
-
-    // 서버 응답 구조에 따라 데이터 갱신 (serializer.data 또는 response.data)
     profileData.value = response.data.data || response.data;
     authStore.nickname = profileData.value.nickname;
     localStorage.setItem("nickname", profileData.value.nickname);
 
     isEditMode.value = false;
     alert("정보가 성공적으로 수정되었습니다! ✨");
-    fetchProfile(); // 최신 정보 다시 가져오기
+    fetchProfile();
   } catch (err) {
-    console.error(err);
     alert("수정에 실패했습니다.");
   }
+};
+
+const moveToDeletePage = () => {
+  router.push({ name: "user_delete" });
 };
 </script>
 
 <style scoped>
+/* --- 기존 CSS 유지 및 알러지 스타일 추가 --- */
+
+.allergy-tag {
+  background: rgb(243, 91, 91);
+  color: black;
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid #d1fae5;
+}
+
+.empty-tag {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-top: 10px;
+}
+
+/* 알러지 수정 칩 스타일 (수정 모드) */
+.allergy-edit-box {
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 20px;
+}
+
+.checkbox-item.allergy-item.active {
+  background: #f43f5e; /* Rose 500 */
+  color: white;
+  border-color: #f43f5e;
+  box-shadow: 0 4px 10px rgba(244, 63, 94, 0.2);
+}
+
+/* --- 공통 스타일 (기존 코드와 동일) --- */
 .mypage-wrapper {
   padding: 60px 20px;
   background-color: #f8fafc;
@@ -243,44 +342,35 @@ const updateProfile = async () => {
   padding: 40px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
 }
-
 .nickname-wrapper {
   display: flex;
   align-items: center;
   gap: 10px;
 }
-
 .provider-badge {
   font-size: 0.75rem;
   padding: 4px 10px;
   border-radius: 50px;
   font-weight: 600;
 }
-
-/* 자체 회원 배지 */
 .provider-badge.local {
   background-color: #f1f5f9;
   color: #64748b;
 }
-
-/* 카카오 배지 (노란색 계열) */
 .provider-badge.kakao {
   background-color: #fee500;
   color: #3c1e1e;
 }
-
-/* 네이버 배지 (초록색 계열) */
 .provider-badge.naver {
   background-color: #03c75a;
   color: #ffffff;
 }
-
 .provider-badge.google {
   background-color: white;
   color: black;
+  border: 1px solid #e2e8f0;
 }
 
-/* 헤더 및 섹션 스타일 */
 .card-header {
   text-align: center;
   margin-bottom: 40px;
@@ -352,7 +442,6 @@ const updateProfile = async () => {
   font-weight: 500;
 }
 
-/* 관심 카테고리 태그 */
 .category-section {
   padding: 25px;
   background: #ffffff;
@@ -375,7 +464,6 @@ const updateProfile = async () => {
   border: 1px solid #d1fae5;
 }
 
-/* 수정 모드 스타일 */
 .edit-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -403,7 +491,6 @@ const updateProfile = async () => {
   font-size: 1rem;
 }
 
-/* 버튼형 체크박스 */
 .category-edit-box {
   margin-top: 25px;
   padding: 20px;
@@ -468,5 +555,29 @@ const updateProfile = async () => {
 .button-group {
   display: flex;
   gap: 10px;
+}
+
+.withdrawal-area {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #f1f3f5;
+  text-align: center;
+}
+.btn-text-danger {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: #adb5bd;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+.btn-text-danger:hover {
+  color: #e11d48;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 </style>

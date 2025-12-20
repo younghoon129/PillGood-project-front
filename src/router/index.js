@@ -18,6 +18,7 @@ import SubstancePillsView from "@/views/pills/SubstancePillsView.vue";
 import MyPageView from "@/views/MyPageView.vue";
 import GoogleCallbackView from "@/views/GoogleCallbackView.vue";
 import ThreadUpdateView from "@/views/pills/ThreadUpdateView.vue";
+import UserDeleteView from "@/views/UserDeleteView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -96,6 +97,20 @@ const router = createRouter({
           component: ThreadUpdateView,
         },
       ],
+    },
+    {
+      path: "/user-delete",
+      name: "user_delete",
+      component: UserDeleteView,
+      beforeEnter: (to, from, next) => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("로그인이 필요한 페이지입니다.");
+          next({ name: "login" });
+        } else {
+          next();
+        }
+      },
     },
     {
       path: "/recommendation",
