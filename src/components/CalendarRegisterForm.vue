@@ -46,10 +46,6 @@
     <div v-if="!hasGoogleToken" class="google-auth-box">
       <p>구글 캘린더와 연동하여 복용 알림을 받아보세요.</p>
       <button @click="connectGoogle" class="btn-google">
-        <img
-          src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_Color_Icon.svg"
-          alt="G"
-        />
         구글 계정 연동하기
       </button>
     </div>

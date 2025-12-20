@@ -1,159 +1,259 @@
 <template>
-  <div class="thread-create-container container my-5">
-    <h2 class="mb-4 text-center">
-      {{ pillName || '영양제' }} 후기 작성
-    </h2>
+  <div class="form-container container my-3 my-md-5">
+    <div class="form-card">
+      <header class="form-header text-center">
+        <span class="header-icon">✏️</span>
+        <h2 class="form-title">솔직한 후기를 들려주세요</h2>
+        <p class="form-subtitle">
+          여러분의 생생한 경험이 다른 분들에게 큰 도움이 됩니다.
+        </p>
+      </header>
 
-    <div v-if="!isLoadingPill" class="card p-4 shadow-sm">
-      <form @submit.prevent="createThread">
-        
-        <div class="mb-3">
-          <label for="title" class="form-label fw-bold">제목</label>
-          <input 
-            type="text" 
-            class="form-control" 
-            id="title" 
-            v-model.trim="title" 
-            required
-            placeholder="후기의 제목을 입력해 주세요."
+      <form @submit.prevent="createThread" class="review-form">
+        <div class="form-group">
+          <label for="title" class="form-label"
+            ><i class="bi bi-fonts"></i> 제목</label
           >
-        </div>
-        
-        <div class="mb-3">
-          <label for="content" class="form-label fw-bold">내용</label>
-          <textarea 
-            class="form-control" 
-            id="content" 
-            rows="10" 
-            v-model.trim="content" 
-            required
-            placeholder="자세하고 솔직한 후기를 남겨주세요."
-          ></textarea>
+          <div class="input-wrapper">
+            <input
+              id="title"
+              v-model="title"
+              type="text"
+              placeholder="한 줄로 요약해서 적어주세요"
+              required
+            />
+          </div>
         </div>
 
-        <div class="d-flex justify-content-end gap-2">
-          <button 
-            type="button" 
-            class="btn btn-secondary" 
-            @click="$router.back()"
+        <div class="form-group">
+          <label for="content" class="form-label"
+            ><i class="bi bi-textarea-resize"></i> 내용</label
           >
+          <div class="input-wrapper">
+            <textarea
+              id="content"
+              v-model="content"
+              rows="10"
+              placeholder="내용을 입력해주세요"
+              required
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="form-group upload-group">
+          <label class="form-label"
+            ><i class="bi bi-camera"></i> 사진 첨부 (선택)</label
+          >
+          <div v-if="previewUrl" class="image-preview-container">
+            <img :src="previewUrl" class="preview-img" />
+            <button type="button" @click="clearImage" class="btn-clear-image">
+              <i class="bi bi-x"></i>
+            </button>
+          </div>
+          <label v-else for="cover_img" class="custom-upload-box">
+            <input
+              type="file"
+              id="cover_img"
+              @change="handleFileUpload"
+              accept="image/*"
+              hidden
+            />
+            <div class="upload-placeholder">
+              <i class="bi bi-plus-lg"></i>
+              <p>이미지 추가</p>
+            </div>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" @click="$router.back()" class="btn-cancel">
             취소
           </button>
-          
-          <button 
-            type="submit" 
-            class="btn btn-primary" 
-            :disabled="isSubmitting"
-          >
-            {{ isSubmitting ? '작성 중...' : '작성 완료' }}
+          <button type="submit" class="btn-submit" :disabled="isSubmitting">
+            <span
+              v-if="isSubmitting"
+              class="spinner-border spinner-border-sm me-2"
+            ></span>
+            등록 완료
           </button>
         </div>
       </form>
     </div>
-
-    <div v-else class="text-center mt-5">
-      <p>영양제 정보를 불러오는 중입니다...</p>
-    </div>
-
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
-// Pinia Store가 필요하다면 import 합니다 (예: 인증 토큰, 알림 처리 등)
+import { ref, onMounted, onUnmounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import axios from "axios";
+import { useAuthStore } from "@/stores/auth";
 
-const route = useRoute()
-const router = useRouter()
-const API_URL = 'http://localhost:8000/pills'
+const route = useRoute();
+const router = useRouter();
+const authStore = useAuthStore();
+const API_URL = "http://localhost:8000/pills";
 
-// 1. 상태 정의
-const pillPk = route.params.pill_pk 
-const title = ref('')
-const content = ref('')
-const coverImgFile = ref(null) // 파일 객체를 저장할 변수
-const pillName = ref('')
-const isLoadingPill = ref(true)
-const isSubmitting = ref(false)
+const pillPk = route.params.pill_pk;
+const title = ref("");
+const content = ref("");
+const coverImgFile = ref(null);
+const previewUrl = ref(null);
+const isSubmitting = ref(false);
 
-// 2. 파일 핸들러
-const handleFileUpload = (event) => {
-  // 이벤트에서 선택된 파일 가져오기
-  coverImgFile.value = event.target.files[0]
-}
+const handleFileUpload = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  coverImgFile.value = file;
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
+  previewUrl.value = URL.createObjectURL(file);
+};
 
-// 3. 폼 제출 함수
+const clearImage = () => {
+  coverImgFile.value = null;
+  URL.revokeObjectURL(previewUrl.value);
+  previewUrl.value = null;
+};
+
 const createThread = async () => {
-  if (isSubmitting.value) return
-  isSubmitting.value = true
-
-  // 폼 데이터를 담을 FormData 객체 생성 (파일 업로드 시 필수)
-  const formData = new FormData()
-  formData.append('title', title.value)
-  formData.append('content', content.value)
-  
-  // 파일이 있다면 추가
-  if (coverImgFile.value) {
-    formData.append('cover_img', coverImgFile.value)
-  }
-  
-  // Django View의 ThreadForm에 필요한 필드가 더 있다면 여기에 추가
-  // 예를 들어, user는 뷰에서 request.user로 처리하므로 FormData에 추가할 필요 없음
+  if (isSubmitting.value) return;
+  isSubmitting.value = true;
+  const fd = new FormData();
+  fd.append("title", title.value);
+  fd.append("content", content.value);
+  if (coverImgFile.value) fd.append("cover_img", coverImgFile.value);
 
   try {
-
-
-    const response = await axios.post(
-      `${API_URL}/${pillPk}/thread/create/`, 
-      formData, 
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data', // 파일 업로드 시 필수
-          // 'Authorization': `Token ${토큰}` // 인증 토큰 필요 시
-        }
-      }
-    )
-    
-    // 성공 응답이 Thread 상세 정보(JSON)를 반환한다고 가정합니다.
-    const newThreadPk = response.data.id
-
-    // 성공 시 상세 페이지로 이동
-    router.push({ 
-      name: 'thread_detail', 
-      params: { 
-        pill_pk: pillPk, 
-        thread_pk: newThreadPk 
-      } 
-    })
-
-  } catch (error) {
-    console.error('후기 작성 중 오류 발생:', error.response ? error.response.data : error)
-    alert('후기 작성에 실패했습니다. 로그인 상태를 확인하거나 입력 값을 점검해주세요.')
+    await axios.post(`${API_URL}/${pillPk}/thread/create/`, fd, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: `Token ${authStore.token}`,
+      },
+    });
+    router.push({ name: "thread_list", params: { pill_pk: pillPk } });
+  } catch (e) {
+    alert("등록 실패");
   } finally {
-    isSubmitting.value = false
+    isSubmitting.value = false;
   }
-}
+};
 
-// 영양제 이름 가져오기 (UX 개선)
-const fetchPillName = async () => {
-    try {
-        const response = await axios.get(`${API_URL}/${pillPk}/`)
-        pillName.value = response.data.PRDLST_NM
-    } catch (error) {
-        console.error('영양제 이름을 가져오는 중 오류 발생:', error)
-    } finally {
-        isLoadingPill.value = false
-    }
-}
-
-onMounted(() => {
-  fetchPillName()
-})
+onUnmounted(() => {
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
+});
 </script>
 
 <style scoped>
-.thread-create-container {
-  max-width: 600px;
+/* 🚩 가로 넘침 방지를 위한 컨테이너 수정 */
+.form-container {
+  width: 100%;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 15px;
+  padding-right: 15px;
+  box-sizing: border-box; /* 패딩이 너비에 포함되도록 설정 */
+}
+
+.form-card {
+  background: #ffffff;
+  padding: 40px;
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-header {
+  margin-bottom: 30px;
+}
+.header-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 10px;
+}
+.form-title {
+  font-weight: 800;
+  color: #1a202c;
+  font-size: 1.5rem;
+}
+.form-subtitle {
+  color: #718096;
+  font-size: 0.9rem;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+.form-label {
+  font-weight: 700;
+  color: #2d3748;
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.input-wrapper input,
+.input-wrapper textarea {
+  width: 100%;
+  padding: 14px;
+  border: 1.5px solid #edf2f7;
+  border-radius: 12px;
+  background: #f8fafc;
+  font-size: 1rem;
+  box-sizing: border-box; /* 🚩 중요: 입력창 너비 고정 */
+}
+
+.custom-upload-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  border: 2px dashed #cbd5e0;
+  border-radius: 16px;
+  background: #f7fafc;
+  cursor: pointer;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 30px;
+}
+.btn-cancel,
+.btn-submit {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+.btn-cancel {
+  background: #f1f5f9;
+  color: #64748b;
+}
+.btn-submit {
+  background: #4f46e5;
+  color: white;
+}
+
+/* 🚩 모바일 대응 스타일 정밀 수정 */
+@media (max-width: 576px) {
+  .form-card {
+    padding: 24px 20px; /* 패딩을 줄여서 공간 확보 */
+    border-radius: 16px;
+  }
+  .form-title {
+    font-size: 1.25rem;
+  }
+  .form-actions {
+    flex-direction: column-reverse;
+  } /* 취소 버튼을 아래로 */
+  .btn-cancel,
+  .btn-submit {
+    width: 100%;
+  }
 }
 </style>

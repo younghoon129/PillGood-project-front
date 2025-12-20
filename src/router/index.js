@@ -17,6 +17,7 @@ import IngredientDetailView from "@/views/pills/IngredientDetailView.vue";
 import SubstancePillsView from "@/views/pills/SubstancePillsView.vue";
 import MyPageView from "@/views/MyPageView.vue";
 import GoogleCallbackView from "@/views/GoogleCallbackView.vue";
+import ThreadUpdateView from "@/views/pills/ThreadUpdateView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -88,6 +89,11 @@ const router = createRouter({
           path: "thread/:thread_pk",
           name: "thread_detail",
           component: ThreadDetailView,
+        },
+        {
+          path: "thread/:thread_pk/update",
+          name: "thread_update",
+          component: ThreadUpdateView,
         },
       ],
     },

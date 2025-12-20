@@ -1,120 +1,284 @@
 <template>
   <div class="thread-detail-container container my-5">
-    
-    <div v-if="isLoading" class="text-center">
-      <div class="spinner-border text-info" role="status">
+    <div v-if="isLoading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
-      <p class="mt-2">후기 상세 정보를 불러오는 중입니다...</p>
     </div>
 
-    <div v-else-if="thread" class="thread-content-wrap">
-      
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="thread-title">{{ thread.title }}</h2>
-        
-      </div>
-      
-      <div class="thread-meta mb-4 pb-3 border-bottom">
-        <span class="text-muted me-3">작성자: {{ thread.user?.username || '익명' }} | </span>
-        <span class="text-muted me-3">작성일: {{ formatDateTime(thread.created_at) }}</span>
+    <article v-else-if="thread" class="post-card">
+      <nav class="post-nav">
+        <button @click="$router.back()" class="btn-back">
+          <i class="bi bi-caret-left-fill"></i> 목록으로
+        </button>
+
+        <div v-if="thread.is_author" class="admin-actions">
+          <RouterLink
+            :to="{
+              name: 'thread_update',
+              params: { pill_pk: pillPk, thread_pk: threadPk },
+            }"
+            class="btn-edit"
+          >
+            수정
+          </RouterLink>
+          <button @click="deleteThread" class="btn-delete">삭제</button>
+        </div>
+      </nav>
+
+      <header class="post-header text-center">
+        <h1 class="post-title">{{ thread.title }}</h1>
+        <div class="post-meta">
+          <span class="author">
+            작성자: <strong>{{ thread.user?.first_name || "익명" }}</strong>
+          </span>
+          <span class="divider"></span>
+          <span class="date">{{ formatDateTime(thread.created_at) }}</span>
+        </div>
+      </header>
+
+      <div v-if="thread.cover_img" class="post-hero">
+        <img :src="thread.cover_img" class="img-fluid" alt="후기 이미지" />
       </div>
 
-      <div v-if="thread.cover_img" class="thread-image-box mb-4 text-center">
-        <img :src="thread.cover_img" :alt="thread.title" class="img-fluid rounded shadow-sm" />
+      <div class="post-content">
+        <p>{{ thread.content }}</p>
       </div>
 
-      <div class="thread-body p-4 border rounded bg-light mb-5">
-        <p style="white-space: pre-wrap;">내용 : {{ thread.content }}</p>
-      </div>
+      <footer class="post-footer">
+        <button
+          @click="toggleLike"
+          class="btn-like"
+          :class="{ active: thread.is_liked }"
+        >
+          <i :class="thread.is_liked ? 'bi bi-heart-fill' : 'bi bi-heart'"></i>
+          😁도움이 되었어요 <span>{{ thread.likes_count || 0 }}</span>
+        </button>
+      </footer>
+    </article>
 
-      </div>
-
-    <div v-else class="alert alert-warning">
-      후기 정보를 찾을 수 없거나 로드에 실패했습니다.
+    <div v-else class="alert alert-warning text-center">
+      후기 정보를 불러올 수 없습니다.
     </div>
-
-    <div class="text-center mt-4">
-      <RouterLink :to="{ name: 'thread_list', params: { pill_pk: pillPk } }" class="btn btn-info">
-        목록으로 돌아가기
-      </RouterLink>
-    </div>
-
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter, RouterLink } from 'vue-router'
-import axios from 'axios'
+import { ref, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import axios from "axios";
+import { useAuthStore } from "@/stores/auth";
 
-const route = useRoute()
-const router = useRouter()
-const API_URL = 'http://localhost:8000/pills'
+const route = useRoute();
+const router = useRouter();
+const authStore = useAuthStore();
+const API_URL = "http://localhost:8000/pills";
 
-const pillPk = route.params.pill_pk 
-const threadPk = route.params.thread_pk 
-const thread = ref(null)
-const isLoading = ref(true)
-
+const pillPk = route.params.pill_pk;
+const threadPk = route.params.thread_pk;
+const thread = ref(null);
+const isLoading = ref(true);
 
 const fetchThreadDetail = async () => {
-  isLoading.value = true
   try {
-    // Django API 호출: GET /pills/:pill_pk/thread/:thread_pk/
-    const response = await axios.get(`${API_URL}/${pillPk}/thread/${threadPk}/`)
-    thread.value = response.data
+    const response = await axios.get(
+      `${API_URL}/${pillPk}/thread/${threadPk}/`,
+      {
+        headers: {
+          Authorization: authStore.token ? `Token ${authStore.token}` : "",
+        },
+      }
+    );
+    thread.value = response.data;
   } catch (error) {
-    console.error(`[${threadPk}번] 후기 상세 로딩 오류:`, error)
-    alert('후기 상세 정보를 불러오는 데 실패했습니다.')
+    console.error("데이터 로드 실패:", error);
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
-}
+};
+
+const toggleLike = async () => {
+  if (!authStore.isLoggedIn) {
+    alert("로그인이 필요한 서비스입니다.");
+    return;
+  }
+  try {
+    const response = await axios.post(
+      `${API_URL}/${pillPk}/thread/${threadPk}/likes/`,
+      {},
+      { headers: { Authorization: `Token ${authStore.token}` } }
+    );
+    thread.value.is_liked = response.data.is_liked;
+    thread.value.likes_count = response.data.likes_count;
+  } catch (error) {
+    console.error("좋아요 처리 오류:", error);
+  }
+};
 
 const deleteThread = async () => {
-  if (!confirm('정말로 이 후기를 삭제하시겠습니까?')) return
-
+  if (!confirm("정말 이 후기를 삭제하시겠습니까?")) return;
   try {
-    await axios.post(`${API_URL}/${pillPk}/thread/${threadPk}/delete/`)
-
-    alert('후기가 성공적으로 삭제되었습니다.')
-    
-    router.push({ name: 'thread_list', params: { pill_pk: pillPk } })
-
+    await axios.delete(`${API_URL}/${pillPk}/thread/${threadPk}/delete/`, {
+      headers: { Authorization: `Token ${authStore.token}` },
+    });
+    alert("삭제되었습니다.");
+    router.push({ name: "thread_list", params: { pill_pk: pillPk } });
   } catch (error) {
-    console.error('후기 삭제 오류:', error)
-    alert('후기 삭제 권한이 없거나 오류가 발생했습니다.')
+    alert("삭제 권한이 없거나 오류가 발생했습니다.");
   }
-}
+};
 
-const formatDateTime = (dateTime) => {
-    if (!dateTime) return ''
-    return new Date(dateTime).toLocaleString('ko-KR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-    })
-}
-
-onMounted(() => {
-  fetchThreadDetail()
-})
+const formatDateTime = (dt) => (dt ? new Date(dt).toLocaleString() : "");
+onMounted(fetchThreadDetail);
 </script>
 
 <style scoped>
-.thread-detail-container {
+.post-card {
   max-width: 800px;
   margin: 0 auto;
+  background: white;
+  padding: 50px;
+  border-radius: 30px;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.04);
 }
-.thread-title {
-  font-size: 2rem;
-  font-weight: bold;
+
+/* --- 상단 네비게이션 --- */
+.post-nav {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 2rem;
 }
-.thread-image-box img {
-  max-height: 400px;
-  width: auto;
-  max-width: 100%;
-  object-fit: contain;
+
+.btn-back {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.btn-edit,
+.btn-delete {
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.btn-edit {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+.btn-edit:hover {
+  background: #e5e7eb;
+}
+
+.btn-delete {
+  background: #fee2e2;
+  color: #dc2626;
+}
+.btn-delete:hover {
+  background: #fecaca;
+}
+
+/* --- 게시글 내용 --- */
+.post-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 20px 0;
+  line-height: 1.2;
+}
+
+.post-meta {
+  color: #9ca3af;
+  font-size: 0.95rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+
+.divider {
+  width: 4px;
+  height: 4px;
+  background: #d1d5db;
+  border-radius: 50%;
+}
+
+.post-hero {
+  margin: 40px -50px;
+  background: #f9fafb;
+}
+
+.post-hero img {
+  max-height: 500px;
+  width: 100%;
+  object-fit: cover;
+}
+
+.post-content {
+  font-size: 1.15rem;
+  line-height: 1.8;
+  color: #374151;
+  white-space: pre-wrap;
+  margin: 40px 0;
+}
+
+/* --- 좋아요 버튼 --- */
+.post-footer {
+  border-top: 1px solid #f3f4f6;
+  padding-top: 30px;
+  text-align: center;
+}
+
+.btn-like {
+  background: white;
+  border: 1px solid #e5e7eb;
+  padding: 12px 30px;
+  border-radius: 50px;
+  font-weight: 700;
+  color: #4b5563;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.btn-like:hover,
+.btn-like.active {
+  border-color: #f87171;
+  color: #ef4444;
+  background: #fff5f5;
+}
+
+.btn-like.active i {
+  transform: scale(1.2);
+  display: inline-block;
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+  .post-card {
+    padding: 30px;
+    border-radius: 0;
+  }
+  .post-hero {
+    margin: 30px -30px;
+  }
+  .post-title {
+    font-size: 1.8rem;
+  }
 }
 </style>
