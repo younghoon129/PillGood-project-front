@@ -238,6 +238,47 @@
               placeholder="example@email.com"
             />
           </div>
+
+          <div
+            v-if="profileData.provider === 'local'"
+            class="password-edit-area"
+          >
+            <button
+              type="button"
+              @click="showPwFields = !showPwFields"
+              class="pw-toggle-btn"
+            >
+              {{ showPwFields ? "비밀번호 변경 취소" : "비밀번호 변경하기" }}
+            </button>
+
+            <div v-if="showPwFields" class="pw-inputs mt-3">
+              <div class="input-group">
+                <label>현재 비밀번호</label>
+                <input
+                  v-model="pwData.current_password"
+                  type="password"
+                  placeholder="현재 비밀번호 입력"
+                />
+              </div>
+              <div class="input-group">
+                <label>새 비밀번호</label>
+                <input
+                  v-model="pwData.new_password"
+                  type="password"
+                  placeholder="새 비밀번호 입력"
+                />
+              </div>
+              <div class="input-group">
+                <label>새 비밀번호 확인</label>
+                <input
+                  v-model="pwData.confirm_password"
+                  type="password"
+                  placeholder="새 비밀번호 다시 입력"
+                />
+              </div>
+            </div>
+          </div>
+
           <div class="input-group full-width">
             <label>성별</label>
             <select v-model="editedData.gender">
@@ -316,6 +357,14 @@ const authStore = useAuthStore();
 const profileData = ref(null);
 const isEditMode = ref(false);
 const editedData = ref({ interested_genres: [], allergies: [] });
+
+// 비밀번호 변경 관련 상태
+const showPwFields = ref(false);
+const pwData = ref({
+  current_password: "",
+  new_password: "",
+  confirm_password: "",
+});
 
 const allCategoryOptions = ref([]);
 const allAllergyOptions = ref([]); // 🚩 알러지 전체 목록을 위한 ref
@@ -550,18 +599,55 @@ const enterEditMode = () => {
       : [],
     allergies: profileData.value.allergies
       ? [...profileData.value.allergies]
-      : [], // 🚩 초기값 설정
+      : [],
   };
+
+  // 🚩 비밀번호 필드 초기화
+  showPwFields.value = false;
+  pwData.value = {
+    current_password: "",
+    new_password: "",
+    confirm_password: "",
+  };
+
   isEditMode.value = true;
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
 };
 
 const updateProfile = async () => {
   try {
+    // 1. 비밀번호 변경 시도 (비밀번호 변경이 활성화된 경우)
+    if (showPwFields.value) {
+      if (!pwData.value.current_password || !pwData.value.new_password) {
+        alert("비밀번호 필드를 모두 입력해주세요.");
+        return;
+      }
+      if (pwData.value.new_password !== pwData.value.confirm_password) {
+        alert("새 비밀번호 확인이 일치하지 않습니다.");
+        return;
+      }
+
+      await axios.post(
+        "http://localhost:8000/accounts/change-password/",
+        {
+          current_password: pwData.value.current_password,
+          new_password: pwData.value.new_password,
+        },
+        config
+      );
+    }
+
+    // 2. 기존 프로필 정보 수정 (닉네임, 나이 등)
     const response = await axios.put(
       "http://localhost:8000/accounts/profile/",
       editedData.value,
       config
     );
+
     profileData.value = response.data.data || response.data;
     authStore.nickname = profileData.value.nickname;
     localStorage.setItem("nickname", profileData.value.nickname);
@@ -570,7 +656,9 @@ const updateProfile = async () => {
     alert("정보가 성공적으로 수정되었습니다! ✨");
     fetchProfile();
   } catch (err) {
-    alert("수정에 실패했습니다.");
+    // 백엔드에서 보낸 에러 메시지가 있으면 출력
+    const errorMsg = err.response?.data?.error || "수정에 실패했습니다.";
+    alert(errorMsg);
   }
 };
 
@@ -835,7 +923,7 @@ const moveToDeletePage = () => {
 .cancel-btn {
   background: #f1f5f9;
   color: #64748b;
-  margin-top: 10px;
+  margin-top: 20px;
 }
 .button-group {
   display: flex;
@@ -1210,5 +1298,88 @@ const moveToDeletePage = () => {
 .autocomplete-list li:hover {
   background: #f8fafc;
   color: #42b983;
+}
+/* 1. 비밀번호 변경 전체 컨테이너 */
+.password-edit-area {
+  margin-top: 20px;
+  /* padding: 12px; */
+  /* background: #fcfdfe; */
+  /* border: 1px solid #e2e8f0; */
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  grid-column: span 2;
+}
+
+/* 2. 비밀번호 변경 토글 버튼 */
+.pw-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px;
+  background-color: #ffffff;
+  color: #6366f1;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  grid-column: span 2;
+}
+
+.pw-toggle-btn:hover {
+  background-color: #f8faff;
+  border-color: #6366f1;
+  transform: translateY(-1px);
+}
+
+/* 3. 비밀번호 입력 영역 (내부 레이아웃) */
+.pw-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: slideDown 0.3s ease-out;
+}
+
+/* 4. 입력창 스타일 보정 */
+.pw-inputs .input-group label {
+  font-size: 0.85rem;
+  color: #475569;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.pw-inputs .input-group input {
+  padding: 12px 16px;
+  border: 2px solid #f1f5f9;
+  border-radius: 12px;
+  background: #ffffff;
+  transition: all 0.2s;
+}
+
+.pw-inputs .input-group input:focus {
+  border-color: #6366f1;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  outline: none;
+}
+
+/* 애니메이션 효과 */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 여백 조절 */
+.mt-3 {
+  margin-top: 15px;
 }
 </style>
