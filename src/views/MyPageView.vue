@@ -27,21 +27,21 @@
 
           <div class="info-grid">
             <div class="info-box">
-              <span class="label">계정 유형</span>
-              <span class="value">{{ loginType }}</span>
+              <span class="label">계정 유형 : </span>
+              <span class="value"> {{ loginType }}</span>
             </div>
             <div class="info-box">
-              <span class="label">성별</span>
+              <span class="label">성별 : </span>
               <span class="value">{{
                 profileData.gender === "M" ? "남성" : "여성"
               }}</span>
             </div>
             <div class="info-box">
-              <span class="label">나이</span>
+              <span class="label">나이 : </span>
               <span class="value">{{ profileData.age }}세</span>
             </div>
             <div class="info-box">
-              <span class="label">사용자 ID</span>
+              <span class="label">사용자 ID : </span>
               <span class="value">@{{ profileData.username }}</span>
             </div>
           </div>
@@ -133,11 +133,11 @@
                   </div>
 
                   <div class="modal-footer">
-                    <button class="btn-cancel" @click="showModal = false">
-                      취소
-                    </button>
                     <button class="btn-submit" @click="handleCustomRegister">
                       등록하기
+                    </button>
+                    <button class="btn-cancel" @click="showModal = false">
+                      취소
                     </button>
                   </div>
                 </div>
@@ -670,36 +670,7 @@ const moveToDeletePage = () => {
 <style scoped>
 /* --- 기존 CSS 유지 및 알러지 스타일 추가 --- */
 
-.allergy-tag {
-  background: rgb(243, 91, 91);
-  color: black;
-  padding: 6px 14px;
-  border-radius: 50px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border: 1px solid #d1fae5;
-}
-
-.empty-tag {
-  font-size: 0.85rem;
-  color: #94a3b8;
-  margin-top: 10px;
-}
-
-/* 알러지 수정 칩 스타일 (수정 모드) */
-.allergy-edit-box {
-  border-top: 1px dashed #e2e8f0;
-  padding-top: 20px;
-}
-
-.checkbox-item.allergy-item.active {
-  background: #f43f5e; /* Rose 500 */
-  color: white;
-  border-color: #f43f5e;
-  box-shadow: 0 4px 10px rgba(244, 63, 94, 0.2);
-}
-
-/* --- 공통 스타일 (기존 코드와 동일) --- */
+/* [1] 공통 레이아웃 및 카드 */
 .mypage-wrapper {
   padding: 60px 20px;
   background-color: #f8fafc;
@@ -707,6 +678,7 @@ const moveToDeletePage = () => {
   display: flex;
   justify-content: center;
 }
+
 .profile-card {
   width: 100%;
   max-width: 800px;
@@ -715,6 +687,49 @@ const moveToDeletePage = () => {
   padding: 40px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
 }
+
+.card-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.card-header h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: #64748b;
+}
+
+/* [2] 프로필 요약 및 계정 정보 */
+.profile-summary {
+  display: flex;
+  align-items: center;
+  padding: 25px;
+  background: #f8fafc;
+  border-radius: 20px;
+  margin-bottom: 30px;
+  border: 1px solid #e2e8f0;
+}
+
+.avatar-placeholder {
+  width: 70px;
+  height: 70px;
+  background: #42b983;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-right: 20px;
+  flex-shrink: 0;
+}
+
 .nickname-wrapper {
   display: flex;
   align-items: center;
@@ -738,73 +753,29 @@ const moveToDeletePage = () => {
   background-color: #03c75a;
   color: #ffffff;
 }
-.provider-badge.google {
-  background-color: white;
-  color: black;
-  border: 1px solid #e2e8f0;
-}
 
-.card-header {
-  text-align: center;
-  margin-bottom: 40px;
-}
-.card-header h2 {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #1e293b;
-  margin-bottom: 8px;
-}
-.subtitle {
-  color: #64748b;
-}
-
-.profile-summary {
-  display: flex;
-  align-items: center;
-  padding: 25px;
-  background: #f8fafc;
-  border-radius: 20px;
-  margin-bottom: 30px;
-  border: 1px solid #e2e8f0;
-}
-.avatar-placeholder {
-  width: 70px;
-  height: 70px;
-  background: #42b983;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.8rem;
-  font-weight: bold;
-  margin-right: 20px;
-}
-.summary-text h3 {
-  margin: 0;
-  font-size: 1.3rem;
-}
-.summary-text span {
-  color: #94a3b8;
-  font-size: 0.9rem;
-}
-
-.info-grid {
+/* [3] 그리드 레이아웃 */
+.info-grid,
+.edit-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
   margin-bottom: 30px;
 }
-.info-box {
+
+.info-box,
+.category-section,
+.cabinet-section,
+.category-edit-box {
   background: #ffffff;
-  padding: 20px;
+  padding: 25px;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
-  border: 1px solid #f1f5f9;
-  display: flex;
-  flex-direction: column;
+  margin-bottom: 20px;
 }
+
 .label {
-  font-size: 0.8rem;
+  font-size: 1rem;
   color: #94a3b8;
   font-weight: 700;
   margin-bottom: 6px;
@@ -815,12 +786,7 @@ const moveToDeletePage = () => {
   font-weight: 500;
 }
 
-.category-section {
-  padding: 25px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-}
+/* [4] 카테고리/알러지 태그 (조회 모드) */
 .tag-container {
   display: flex;
   flex-wrap: wrap;
@@ -836,40 +802,99 @@ const moveToDeletePage = () => {
   font-weight: 600;
   border: 1px solid #d1fae5;
 }
-
-.edit-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  margin-bottom: 25px;
+.allergy-tag {
+  background: #fff1f2;
+  color: #e11d48;
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid #fecaca;
 }
+
+/* [5] 나의 영양제함 카드 */
+.cabinet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.add-manual-btn {
+  background-color: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  color: #475569;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px;
+}
+.pill-card {
+  background: white;
+  border: 1px solid #f1f5f9;
+  border-radius: 16px;
+  padding: 15px;
+  text-align: center;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.pill-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+}
+.mini-pill-img {
+  width: 100%;
+  height: 100px;
+  object-fit: contain;
+  margin-bottom: 10px;
+}
+.badge-custom {
+  background-color: #64748b;
+  color: white;
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 4px;
+}
+.remove-btn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 6px 0;
+  font-size: 0.8rem;
+  color: #ef4444;
+  background: #fff1f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* [6] 수정 폼 및 체크박스 */
 .input-group {
   display: flex;
   flex-direction: column;
+  gap: 8px;
 }
 .input-group.full-width {
   grid-column: span 2;
 }
-.input-group label {
-  font-size: 0.9rem;
-  margin-bottom: 6px;
-  font-weight: 600;
-  color: #475569;
-}
 .input-group input,
-.input-group select {
-  padding: 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
+.input-group select,
+.input-group textarea {
+  padding: 12px 16px;
+  border: 2px solid #f1f5f9;
+  border-radius: 12px;
   font-size: 1rem;
 }
-
-.category-edit-box {
-  margin-top: 25px;
-  padding: 20px;
-  background: #f8fafc;
-  border-radius: 16px;
+.input-group input:focus {
+  outline: none;
+  border-color: #42b983;
+  background: #f0fdf4;
 }
+
 .checkbox-group {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -885,21 +910,24 @@ const moveToDeletePage = () => {
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   cursor: pointer;
-  font-size: 0.9rem;
   font-weight: 600;
   color: #64748b;
-  transition: 0.2s;
 }
-.checkbox-item input {
+.checkbox-item input[type="checkbox"] {
   display: none;
 }
 .checkbox-item.active {
   background: #42b983;
   color: white;
   border-color: #42b983;
-  box-shadow: 0 4px 10px rgba(66, 185, 131, 0.2);
+}
+.checkbox-item.allergy-item.active {
+  background: #f43f5e;
+  color: white;
+  border-color: #f43f5e;
 }
 
+/* [7] 메인 버튼들 (수정, 저장, 취소) */
 .main-btn {
   width: 100%;
   padding: 16px;
@@ -908,186 +936,53 @@ const moveToDeletePage = () => {
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.2s;
 }
 .edit-btn {
-  background: #518dee;
+  background-color: #518dee;
   color: white;
   margin-top: 20px;
+}
+.edit-btn:hover {
+  background-color: #3b76d6;
+  transform: translateY(-2px);
 }
 .save-btn {
   background: #42b983;
   color: white;
-  margin-top: 20px;
 }
 .cancel-btn {
   background: #f1f5f9;
   color: #64748b;
-  margin-top: 20px;
 }
 .button-group {
   display: flex;
   gap: 10px;
-}
-
-.withdrawal-area {
-  margin-top: 40px;
-  padding-top: 20px;
-  border-top: 1px solid #f1f3f5;
-  text-align: center;
-}
-.btn-text-danger {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 0.9rem;
-  color: #adb5bd;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  text-decoration: none;
-}
-.btn-text-danger:hover {
-  color: #e11d48;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-
-/* 사용자 영양제함 스타일 */
-.cabinet-section {
-  padding: 25px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-}
-
-.cabinet-section h3 {
-  margin-top: 0;
-}
-
-.pill-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 20px;
   margin-top: 20px;
 }
 
-.pill-card {
-  background: white;
-  border: 1px solid #f1f5f9;
-  border-radius: 16px;
-  padding: 15px;
-  text-align: center;
-  transition: transform 0.2s;
-}
-
-.pill-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
-  cursor: pointer;
-  opacity: 0.8;
-}
-
-.mini-pill-img {
-  width: 100%;
-  height: 100px;
-  object-fit: contain;
-  margin-bottom: 10px;
-}
-
-.pill-info .name {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0;
-  /* 두 줄 이상이면 생략 처리(...) */
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.remove-btn {
-  margin-top: 12px;
-  width: 100%;
-  padding: 6px 0;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #ef4444;
-  background: #fff1f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.remove-btn:hover {
-  background: #ef4444;
-  color: white;
-  border-color: #ef4444;
-}
-
-/* 모달 기본 스타일 */
+/* [8] 모달 스타일 및 모달 버튼 (🚩 복구 완료) */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-.modal-content {
-  background: white;
-  padding: 30px;
-  border-radius: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 350px;
-}
-
-/* 모달 애니메이션 (Vue Transition) */
-.modal-enter-active,
-.modal-leave-active {
-  transition: all 0.3s ease;
-}
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-  transform: scale(0.9);
-}
-
-/* 오버레이: 배경 흐림 효과 */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(15, 23, 42, 0.6); /* 진한 네이비톤 반투명 */
-  backdrop-filter: blur(8px); /* 글래스모피즘 핵심 */
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 2000;
 }
-
-/* 모달 카드 */
 .modal-card {
   background: white;
   width: 90%;
   max-width: 450px;
   border-radius: 24px;
-  overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
 }
-
-/* 헤더 */
 .modal-header {
   padding: 24px 24px 10px;
   display: flex;
@@ -1107,150 +1002,58 @@ const moveToDeletePage = () => {
   color: #94a3b8;
   cursor: pointer;
 }
-
-/* 바디 & 입력창 */
 .modal-body {
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.input-group label {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #475569;
-}
-.required {
-  color: #ef4444;
-}
-
-.input-group input,
-.input-group textarea {
-  padding: 12px 16px;
-  border: 2px solid #f1f5f9;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  transition: all 0.2s;
-}
-.input-group input:focus,
-.input-group textarea:focus {
-  outline: none;
-  border-color: #42b983; /* 포인트 컬러 */
-  background: #f0fdf4;
-}
-
-/* 푸터 버튼 */
 .modal-footer {
   padding: 16px 24px 24px;
   display: flex;
   gap: 12px;
 }
-.btn-cancel,
+
+/* 🚩 모달 내 취소/등록 버튼 스타일 */
+.btn-cancel {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  background: #f1f5f9;
+  color: #64748b;
+  border: none;
+  transition: 0.2s;
+}
+.btn-cancel:hover {
+  background: #e2e8f0;
+}
 .btn-submit {
   flex: 1;
   padding: 14px;
   border-radius: 12px;
   font-weight: 700;
   cursor: pointer;
-  transition: 0.2s;
-}
-.btn-cancel {
-  background: #f1f5f9;
-  color: #64748b;
-  border: none;
-}
-.btn-cancel:hover {
-  background: #e2e8f0;
-}
-
-.btn-submit {
   background: #42b983;
   color: white;
   border: none;
+  transition: 0.2s;
 }
 .btn-submit:hover {
   background: #38a169;
   box-shadow: 0 4px 12px rgba(66, 185, 131, 0.3);
 }
 
-/* 1. 나의 영양제함 헤더 레이아웃 */
-.cabinet-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-/* 2. 직접 등록 버튼 스타일 */
-.add-manual-btn {
-  background-color: #f8fafc;
-  border: 1px dashed #cbd5e1; /* 점선 테두리로 '추가' 느낌 강조 */
-  color: #475569;
-  padding: 8px 16px;
-  border-radius: 10px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.add-manual-btn:hover {
-  background-color: #f1f5f9;
-  border-color: #94a3b8;
-  color: #1e293b;
-  transform: translateY(-2px); /* 살짝 떠오르는 효과 */
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-}
-
-/* 3. 직접 등록 뱃지 스타일 */
-.badge-custom {
-  display: inline-block;
-  background-color: #64748b; /* 차분한 슬레이트 블루 톤 */
-  color: white;
-  font-size: 0.65rem;
-  font-weight: 800;
-  padding: 2px 6px;
-  border-radius: 4px;
-  margin-right: 6px;
-  vertical-align: middle;
-  line-height: 1.4;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-/* 4. 커스텀 영양제 카드 변주 (선택 사항) */
-/* 직접 등록한 카드임을 더 강조하고 싶다면 사용하세요 */
-.pill-card {
-  position: relative;
-  overflow: hidden;
-}
-
-/* 5. 텍스트 줄바꿈 및 정렬 보정 */
-.pill-info .name {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap; /* 뱃지와 이름이 자연스럽게 섞이도록 */
-  gap: 4px;
-}
-
-/* 성분 선택 관련 스타일 */
+/* [9] 성분 태그 및 자동완성 */
 .selected-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 10px;
 }
-
 .ing-tag {
-  background: #f0fdf4; /* 연한 초록색 배경 */
+  background: #f0fdf4;
   color: #16a34a;
   border: 1px solid #bbf7d0;
   padding: 4px 10px;
@@ -1261,16 +1064,9 @@ const moveToDeletePage = () => {
   align-items: center;
   gap: 4px;
 }
-
-.ing-tag i {
-  cursor: pointer;
-  font-size: 1rem;
-}
-
 .search-wrap {
   position: relative;
 }
-
 .autocomplete-list {
   position: absolute;
   top: 100%;
@@ -1279,94 +1075,116 @@ const moveToDeletePage = () => {
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  z-index: 50; /* 모달 내부에서 가장 위에 뜨도록 */
-  list-style: none;
-  padding: 5px 0;
-  margin-top: 5px;
+  z-index: 2100;
   max-height: 150px;
   overflow-y: auto;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  padding: 0;
+  list-style: none;
+  margin-top: 5px;
 }
-
 .autocomplete-list li {
   padding: 10px 15px;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: background 0.2s;
 }
-
 .autocomplete-list li:hover {
   background: #f8fafc;
   color: #42b983;
 }
-/* 1. 비밀번호 변경 전체 컨테이너 */
+
+/* [10] 비밀번호 변경 영역 */
 .password-edit-area {
   margin-top: 20px;
-  /* padding: 12px; */
-  /* background: #fcfdfe; */
-  /* border: 1px solid #e2e8f0; */
-  border-radius: 20px;
-  transition: all 0.3s ease;
   grid-column: span 2;
 }
-
-/* 2. 비밀번호 변경 토글 버튼 */
 .pw-toggle-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 100%;
   padding: 12px;
-  background-color: #ffffff;
+  background: white;
   color: #6366f1;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-  grid-column: span 2;
 }
-
-.pw-toggle-btn:hover {
-  background-color: #f8faff;
-  border-color: #6366f1;
-  transform: translateY(-1px);
-}
-
-/* 3. 비밀번호 입력 영역 (내부 레이아웃) */
 .pw-inputs {
+  animation: slideDown 0.3s ease-out;
+  margin-top: 15px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  animation: slideDown 0.3s ease-out;
+  gap: 15px;
 }
 
-/* 4. 입력창 스타일 보정 */
-.pw-inputs .input-group label {
-  font-size: 0.85rem;
-  color: #475569;
-  font-weight: 700;
-  margin-bottom: 6px;
+/* [11] 회원 탈퇴 */
+.withdrawal-area {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #f1f3f5;
+  text-align: center;
+}
+.btn-text-danger {
+  background: none;
+  border: none;
+  color: #adb5bd;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.btn-text-danger:hover {
+  color: #e11d48;
+  text-decoration: underline;
 }
 
-.pw-inputs .input-group input {
-  padding: 12px 16px;
-  border: 2px solid #f1f5f9;
-  border-radius: 12px;
-  background: #ffffff;
-  transition: all 0.2s;
+/* [12] 📱 모바일 반응형 */
+@media (max-width: 768px) {
+  .mypage-wrapper {
+    padding: 20px 10px;
+  }
+  .profile-card {
+    padding: 25px 15px;
+    border-radius: 0;
+  }
+  .info-grid,
+  .edit-grid {
+    grid-template-columns: 1fr;
+  }
+  .input-group.full-width,
+  .password-edit-area {
+    grid-column: span 1;
+  }
+  .profile-summary {
+    flex-direction: column;
+    text-align: center;
+  }
+  .avatar-placeholder {
+    margin-right: 0;
+    margin-bottom: 15px;
+  }
+  .pill-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .checkbox-group {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .button-group,
+  .modal-footer {
+    flex-direction: column;
+  } /* 모바일에서 버튼 세로로 */
 }
 
-.pw-inputs .input-group input:focus {
-  border-color: #6366f1;
-  background: #ffffff;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-  outline: none;
+/* 유틸리티 */
+.mt-3 {
+  margin-top: 15px !important;
+}
+.mt-4 {
+  margin-top: 20px !important;
+}
+.required {
+  color: #ef4444;
 }
 
-/* 애니메이션 효과 */
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -1376,10 +1194,5 @@ const moveToDeletePage = () => {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* 여백 조절 */
-.mt-3 {
-  margin-top: 15px;
 }
 </style>
