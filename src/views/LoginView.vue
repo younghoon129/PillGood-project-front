@@ -7,20 +7,19 @@ const authStore = useAuthStore();
 const router = useRouter();
 
 // 카카오 로그인 설정
-const KAKAO_REST_API_KEY = "8bfc2c0375eb0ec262342e4f996b7e4d"; // 카카오 콘솔 '플랫폼 키'에서 확인
-const KAKAO_REDIRECT_URI = "http://localhost:5173/login/kakao"; // 콘솔에 등록한 URI와 동일해야 함
+const KAKAO_REST_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY; // 카카오 콘솔 '플랫폼 키'에서 확인
+const KAKAO_REDIRECT_URI = import.meta.env.VITE_KAKAO_REDIRECT_URI; // 콘솔에 등록한 URI와 동일해야 함
 const KAKAO_AUTH_URL = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_REST_API_KEY}&redirect_uri=${KAKAO_REDIRECT_URI}&response_type=code&scope=profile_nickname,account_email,talk_calendar&prompt=consent`;
 
 // 네이버 로그인 설정
-const NAVER_CLIENT_ID = "tPDkW3PnoZVt6H0P8LTM";
-const NAVER_REDIRECT_URI = "http://localhost:5173/login/naver";
+const NAVER_CLIENT_ID = import.meta.env.VITE_NAVER_CLIENT_ID;
+const NAVER_REDIRECT_URI = import.meta.env.VITE_NAVER_REDIRECT_URI;
 const STATE = "random_string_123"; // 보안을 위한 임의의 문자열
 const NAVER_AUTH_URL = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${NAVER_CLIENT_ID}&redirect_uri=${NAVER_REDIRECT_URI}&state=${STATE}`;
 
 // 구글 캘린더 설정
-const GOOGLE_CLIENT_ID =
-  "34177585488-sbk57388v5hfnjprm894sfl5ektmjpn9.apps.googleusercontent.com";
-const GOOGLE_REDIRECT_URI = "http://localhost:5173/login/google";
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const GOOGLE_REDIRECT_URI = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
 // 캘린더 수정을 위한 권한(Scope) 추가
 const GOOGLE_AUTH_URL = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${GOOGLE_REDIRECT_URI}&response_type=code&scope=https://www.googleapis.com/auth/calendar.events%20openid%20email%20profile&access_type=offline&prompt=consent`;
 
