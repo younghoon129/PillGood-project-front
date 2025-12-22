@@ -38,7 +38,7 @@ const handleLogin = async () => {
   }
 };
 
-// 소셜 로그인 핸들러 (현재는 알림창만 띄우도록 설정)
+// 소셜 로그인 핸들러
 const handleSocialLogin = (platform) => {
   if (platform === "kakao") {
     // 2. 카카오 인가 코드 요청 URL 생성

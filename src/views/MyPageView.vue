@@ -546,7 +546,7 @@ const loginType = computed(() => {
   if (profileData.value?.username?.startsWith("google_")) return "구글 로그인";
   return "일반 로그인";
 });
-
+console.log(providerLabel);
 // 1. 전체 카테고리 로드
 const fetchAllCategories = async () => {
   try {
