@@ -27,26 +27,149 @@
 
           <div class="info-grid">
             <div class="info-box">
-              <span class="label">계정 유형</span>
-              <span class="value">{{ loginType }}</span>
+              <span class="label">계정 유형 : </span>
+              <span class="value"> {{ loginType }}</span>
             </div>
             <div class="info-box">
-              <span class="label">성별</span>
+              <span class="label">성별 : </span>
               <span class="value">{{
                 profileData.gender === "M" ? "남성" : "여성"
               }}</span>
             </div>
             <div class="info-box">
-              <span class="label">나이</span>
+              <span class="label">나이 : </span>
               <span class="value">{{ profileData.age }}세</span>
             </div>
             <div class="info-box">
-              <span class="label">사용자 ID</span>
+              <span class="label">사용자 ID : </span>
               <span class="value">@{{ profileData.username }}</span>
             </div>
           </div>
 
           <CalendarRegisterForm />
+          <br />
+
+          <div class="cabinet-section">
+            <div class="cabinet-header">
+              <h3>📦 나의 영양제함</h3>
+              <button @click="showModal = true" class="add-manual-btn">
+                + 직접 등록
+              </button>
+            </div>
+
+            <Transition name="modal">
+              <div
+                v-if="showModal"
+                class="modal-overlay"
+                @click.self="showModal = false"
+              >
+                <div class="modal-card">
+                  <div class="modal-header">
+                    <h4>✨ 영양제 직접 등록</h4>
+                    <button class="close-btn" @click="showModal = false">
+                      &times;
+                    </button>
+                  </div>
+
+                  <div class="modal-body">
+                    <div class="input-group">
+                      <label>제품명 <span class="required">*</span></label>
+                      <input
+                        v-model="newCustomPill.name"
+                        placeholder="예: 해외직구 오메가3"
+                      />
+                    </div>
+
+                    <div class="input-group">
+                      <label>제조사/브랜드</label>
+                      <input
+                        v-model="newCustomPill.brand"
+                        placeholder="예: 스포츠리서치"
+                      />
+                    </div>
+
+                    <div class="input-group">
+                      <label>주요 성분 선택 (중복 분석용)</label>
+
+                      <div class="selected-tags">
+                        <span
+                          v-for="(ing, idx) in selectedIngredients"
+                          :key="idx"
+                          class="ing-tag"
+                        >
+                          {{ ing }}
+                          <i class="bi bi-x" @click="removeIngredient(idx)"></i>
+                        </span>
+                      </div>
+
+                      <div class="search-wrap">
+                        <input
+                          v-model="ingredientSearch"
+                          placeholder="성분명 검색 (예: 비타민C)"
+                        />
+                        <ul
+                          v-if="filteredIngredients.length"
+                          class="autocomplete-list"
+                        >
+                          <li
+                            v-for="name in filteredIngredients"
+                            :key="name"
+                            @click="addIngredient(name)"
+                          >
+                            {{ name }}
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div class="input-group">
+                      <label>복용 메모</label>
+                      <textarea
+                        v-model="newCustomPill.memo"
+                        placeholder="예: 아침 식사 직후 1알 복용"
+                        rows="3"
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  <div class="modal-footer">
+                    <button class="btn-submit" @click="handleCustomRegister">
+                      등록하기
+                    </button>
+                    <button class="btn-cancel" @click="showModal = false">
+                      취소
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </Transition>
+
+            <div v-if="allPills && allPills.length > 0" class="pill-grid">
+              <div
+                v-for="item in allPills"
+                :key="item.type + item.id"
+                class="pill-card"
+                @click="item.type === 'db' ? goToDetail(item.pill_id) : null"
+              >
+                <img :src="item.img || defaultImg" class="mini-pill-img" />
+
+                <div class="pill-info">
+                  <p class="name">
+                    <span v-if="item.type === 'custom'" class="badge-custom"
+                      >개인</span
+                    >
+                    {{ item.name }}
+                  </p>
+                  <button @click.stop="removePill(item)" class="remove-btn">
+                    <i class="bi bi-trash"></i> 삭제
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <p v-else class="empty-msg">현재 섭취 중인 영양제가 없습니다.</p>
+          </div>
+
           <br />
 
           <div class="category-section mb-3">
@@ -66,6 +189,7 @@
             <div v-else class="empty-tag">설정된 관심 카테고리가 없습니다.</div>
           </div>
           <br />
+
           <div class="category-section allergy-section">
             <span class="label">나의 알러지 정보</span>
             <div
@@ -114,6 +238,47 @@
               placeholder="example@email.com"
             />
           </div>
+
+          <div
+            v-if="profileData.provider === 'local'"
+            class="password-edit-area"
+          >
+            <button
+              type="button"
+              @click="showPwFields = !showPwFields"
+              class="pw-toggle-btn"
+            >
+              {{ showPwFields ? "비밀번호 변경 취소" : "비밀번호 변경하기" }}
+            </button>
+
+            <div v-if="showPwFields" class="pw-inputs mt-3">
+              <div class="input-group">
+                <label>현재 비밀번호</label>
+                <input
+                  v-model="pwData.current_password"
+                  type="password"
+                  placeholder="현재 비밀번호 입력"
+                />
+              </div>
+              <div class="input-group">
+                <label>새 비밀번호</label>
+                <input
+                  v-model="pwData.new_password"
+                  type="password"
+                  placeholder="새 비밀번호 입력"
+                />
+              </div>
+              <div class="input-group">
+                <label>새 비밀번호 확인</label>
+                <input
+                  v-model="pwData.confirm_password"
+                  type="password"
+                  placeholder="새 비밀번호 다시 입력"
+                />
+              </div>
+            </div>
+          </div>
+
           <div class="input-group full-width">
             <label>성별</label>
             <select v-model="editedData.gender">
@@ -184,6 +349,7 @@ import axios from "axios";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import CalendarRegisterForm from "@/components/CalendarRegisterForm.vue";
+import defaultImg from "@/assets/pill.jpg";
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -192,8 +358,173 @@ const profileData = ref(null);
 const isEditMode = ref(false);
 const editedData = ref({ interested_genres: [], allergies: [] });
 
+// 비밀번호 변경 관련 상태
+const showPwFields = ref(false);
+const pwData = ref({
+  current_password: "",
+  new_password: "",
+  confirm_password: "",
+});
+
 const allCategoryOptions = ref([]);
 const allAllergyOptions = ref([]); // 🚩 알러지 전체 목록을 위한 ref
+
+const myPills = ref([]);
+const myCustomPills = ref([]);
+
+const allIngredients = ref([]); // 서버에서 받은 전체 성분 리스트
+const ingredientSearch = ref(""); // 사용자 검색어
+const selectedIngredients = ref([]); // 현재 선택된 성분들(배열)
+
+// 1. 성분 리스트 불러오기
+const fetchIngredients = async () => {
+  const res = await axios.get("http://localhost:8000/pills/all-ingredients/");
+  allIngredients.value = res.data;
+};
+
+// 2. 검색어에 따른 자동완성 필터링 (최대 10개 표시)
+const filteredIngredients = computed(() => {
+  const query = ingredientSearch.value.trim();
+  if (!query) return [];
+  return allIngredients.value
+    .filter((name) => name.includes(query))
+    .filter((name) => !selectedIngredients.value.includes(name)) // 이미 선택한 건 제외
+    .slice(0, 10);
+});
+
+// 3. 성분 추가/삭제 함수
+const addIngredient = (name) => {
+  selectedIngredients.value.push(name);
+  ingredientSearch.value = ""; // 입력창 비우기
+};
+const removeIngredient = (idx) => selectedIngredients.value.splice(idx, 1);
+
+const fetchCustomPills = async () => {
+  try {
+    const response = await axios.get(
+      "http://localhost:8000/pills/custom-pills/",
+      config
+    );
+    myCustomPills.value = response.data;
+  } catch (err) {
+    console.error("커스텀 영양제 로드 실패:", err);
+  }
+};
+
+const allPills = computed(() => {
+  // 1. 일반 영양제 데이터 가공
+  const dbList = myPills.value.map((item) => ({
+    id: item.id, // UserPill 모델의 PK (삭제 시 필요할 수 있음)
+    pill_id: item.pill?.id, // 🚩 실제 영양제 상세페이지로 갈 때 쓰는 ID
+    name: item.pill?.PRDLST_NM || "이름 정보 없음",
+    img: item.pill?.cover || defaultImg,
+    type: "db",
+    created_at: item.created_at,
+  }));
+
+  // 2. 커스텀 영양제 데이터 가공
+  const customList = myCustomPills.value.map((item) => ({
+    id: item.id,
+    pill_id: null, // 커스텀은 상세페이지가 없음
+    name: item.name,
+    img: defaultImg,
+    type: "custom",
+    created_at: item.created_at,
+  }));
+
+  return [...dbList, ...customList].sort(
+    (a, b) => new Date(b.created_at) - new Date(a.created_at)
+  );
+});
+
+const showModal = ref(false);
+const newCustomPill = ref({ name: "", brand: "", memo: "" });
+
+const refreshAllPills = async () => {
+  try {
+    // 두 API 호출을 동시에 실행하고 모두 완료될 때까지 기다립니다.
+    await Promise.all([fetchMyPills(), fetchCustomPills()]);
+    console.log("모든 영양제 리스트가 갱신되었습니다. ✨");
+  } catch (err) {
+    console.error("리스트 갱신 중 오류 발생:", err);
+  }
+};
+
+const handleCustomRegister = async () => {
+  // 1. 유효성 검사 (가장 먼저 수행)
+  if (!newCustomPill.value.name) {
+    alert("영양제 이름을 입력해주세요! 💊");
+    return;
+  }
+
+  try {
+    // 2. 데이터 가공 (선택된 성분 배열을 쉼표 문자열로 변환)
+    const payload = {
+      ...newCustomPill.value,
+      ingredients: selectedIngredients.value.join(", "),
+    };
+
+    // 3. 서버 전송
+    await axios.post(
+      "http://localhost:8000/pills/custom-pills/",
+      payload,
+      config
+    );
+
+    // 4. 성공 처리
+    alert("나의 영양제함에 등록되었습니다! ✨");
+    showModal.value = false;
+
+    // 5. 데이터 초기화 (입력창 + 선택된 성분 태그들)
+    newCustomPill.value = { name: "", brand: "", memo: "" };
+    selectedIngredients.value = []; // 🚩 성분 태그 초기화 추가
+    ingredientSearch.value = "";
+
+    // 6. 리스트 최신화
+    await refreshAllPills();
+  } catch (err) {
+    console.error("등록 실패:", err);
+    alert("등록 중 오류가 발생했습니다.");
+  }
+};
+
+const removePill = async (item) => {
+  if (!confirm(`[${item.name}] 영양제를 삭제하시겠습니까?`)) return;
+
+  try {
+    const url =
+      item.type === "custom"
+        ? `http://localhost:8000/pills/custom-pills/${item.id}/`
+        : `http://localhost:8000/pills/${item.pill_id}/toggle/`;
+
+    await axios.delete(url, config);
+
+    await refreshAllPills();
+
+    alert("영양제함에서 삭제되었습니다.");
+  } catch (err) {
+    console.error("삭제 실패:", err);
+    alert("삭제 중 오류가 발생했습니다.");
+  }
+};
+
+const fetchMyPills = async () => {
+  try {
+    const response = await axios.get(
+      "http://localhost:8000/pills/my-pills/",
+      config
+    );
+    myPills.value = response.data; // 서버에서 받아온 리스트 저장
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const goToDetail = (pillId) => {
+  // 영양제 상세 페이지의 라우터 경로가 '/pills/:pill_pk'라고 가정합니다.
+  // name을 사용하신다면 router.push({ name: 'PillDetail', params: { pill_pk: pillId } })
+  router.push(`/pills/${pillId}`);
+};
 
 const config = {
   headers: { Authorization: `Token ${authStore.token}` },
@@ -254,7 +585,10 @@ const fetchProfile = async () => {
 onMounted(() => {
   fetchProfile();
   fetchAllCategories();
-  fetchAllAllergies(); // 🚩 마운트 시 호출
+  fetchAllAllergies();
+  fetchMyPills();
+  fetchCustomPills();
+  fetchIngredients();
 });
 
 const enterEditMode = () => {
@@ -265,18 +599,55 @@ const enterEditMode = () => {
       : [],
     allergies: profileData.value.allergies
       ? [...profileData.value.allergies]
-      : [], // 🚩 초기값 설정
+      : [],
   };
+
+  // 🚩 비밀번호 필드 초기화
+  showPwFields.value = false;
+  pwData.value = {
+    current_password: "",
+    new_password: "",
+    confirm_password: "",
+  };
+
   isEditMode.value = true;
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
 };
 
 const updateProfile = async () => {
   try {
+    // 1. 비밀번호 변경 시도 (비밀번호 변경이 활성화된 경우)
+    if (showPwFields.value) {
+      if (!pwData.value.current_password || !pwData.value.new_password) {
+        alert("비밀번호 필드를 모두 입력해주세요.");
+        return;
+      }
+      if (pwData.value.new_password !== pwData.value.confirm_password) {
+        alert("새 비밀번호 확인이 일치하지 않습니다.");
+        return;
+      }
+
+      await axios.post(
+        "http://localhost:8000/accounts/change-password/",
+        {
+          current_password: pwData.value.current_password,
+          new_password: pwData.value.new_password,
+        },
+        config
+      );
+    }
+
+    // 2. 기존 프로필 정보 수정 (닉네임, 나이 등)
     const response = await axios.put(
       "http://localhost:8000/accounts/profile/",
       editedData.value,
       config
     );
+
     profileData.value = response.data.data || response.data;
     authStore.nickname = profileData.value.nickname;
     localStorage.setItem("nickname", profileData.value.nickname);
@@ -285,7 +656,9 @@ const updateProfile = async () => {
     alert("정보가 성공적으로 수정되었습니다! ✨");
     fetchProfile();
   } catch (err) {
-    alert("수정에 실패했습니다.");
+    // 백엔드에서 보낸 에러 메시지가 있으면 출력
+    const errorMsg = err.response?.data?.error || "수정에 실패했습니다.";
+    alert(errorMsg);
   }
 };
 
@@ -297,36 +670,7 @@ const moveToDeletePage = () => {
 <style scoped>
 /* --- 기존 CSS 유지 및 알러지 스타일 추가 --- */
 
-.allergy-tag {
-  background: rgb(243, 91, 91);
-  color: black;
-  padding: 6px 14px;
-  border-radius: 50px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border: 1px solid #d1fae5;
-}
-
-.empty-tag {
-  font-size: 0.85rem;
-  color: #94a3b8;
-  margin-top: 10px;
-}
-
-/* 알러지 수정 칩 스타일 (수정 모드) */
-.allergy-edit-box {
-  border-top: 1px dashed #e2e8f0;
-  padding-top: 20px;
-}
-
-.checkbox-item.allergy-item.active {
-  background: #f43f5e; /* Rose 500 */
-  color: white;
-  border-color: #f43f5e;
-  box-shadow: 0 4px 10px rgba(244, 63, 94, 0.2);
-}
-
-/* --- 공통 스타일 (기존 코드와 동일) --- */
+/* [1] 공통 레이아웃 및 카드 */
 .mypage-wrapper {
   padding: 60px 20px;
   background-color: #f8fafc;
@@ -334,6 +678,7 @@ const moveToDeletePage = () => {
   display: flex;
   justify-content: center;
 }
+
 .profile-card {
   width: 100%;
   max-width: 800px;
@@ -342,6 +687,49 @@ const moveToDeletePage = () => {
   padding: 40px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
 }
+
+.card-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.card-header h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: #64748b;
+}
+
+/* [2] 프로필 요약 및 계정 정보 */
+.profile-summary {
+  display: flex;
+  align-items: center;
+  padding: 25px;
+  background: #f8fafc;
+  border-radius: 20px;
+  margin-bottom: 30px;
+  border: 1px solid #e2e8f0;
+}
+
+.avatar-placeholder {
+  width: 70px;
+  height: 70px;
+  background: #42b983;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-right: 20px;
+  flex-shrink: 0;
+}
+
 .nickname-wrapper {
   display: flex;
   align-items: center;
@@ -365,73 +753,29 @@ const moveToDeletePage = () => {
   background-color: #03c75a;
   color: #ffffff;
 }
-.provider-badge.google {
-  background-color: white;
-  color: black;
-  border: 1px solid #e2e8f0;
-}
 
-.card-header {
-  text-align: center;
-  margin-bottom: 40px;
-}
-.card-header h2 {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #1e293b;
-  margin-bottom: 8px;
-}
-.subtitle {
-  color: #64748b;
-}
-
-.profile-summary {
-  display: flex;
-  align-items: center;
-  padding: 25px;
-  background: #f8fafc;
-  border-radius: 20px;
-  margin-bottom: 30px;
-  border: 1px solid #e2e8f0;
-}
-.avatar-placeholder {
-  width: 70px;
-  height: 70px;
-  background: #42b983;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.8rem;
-  font-weight: bold;
-  margin-right: 20px;
-}
-.summary-text h3 {
-  margin: 0;
-  font-size: 1.3rem;
-}
-.summary-text span {
-  color: #94a3b8;
-  font-size: 0.9rem;
-}
-
-.info-grid {
+/* [3] 그리드 레이아웃 */
+.info-grid,
+.edit-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
   margin-bottom: 30px;
 }
-.info-box {
+
+.info-box,
+.category-section,
+.cabinet-section,
+.category-edit-box {
   background: #ffffff;
-  padding: 20px;
+  padding: 25px;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
-  border: 1px solid #f1f5f9;
-  display: flex;
-  flex-direction: column;
+  margin-bottom: 20px;
 }
+
 .label {
-  font-size: 0.8rem;
+  font-size: 1rem;
   color: #94a3b8;
   font-weight: 700;
   margin-bottom: 6px;
@@ -442,12 +786,7 @@ const moveToDeletePage = () => {
   font-weight: 500;
 }
 
-.category-section {
-  padding: 25px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-}
+/* [4] 카테고리/알러지 태그 (조회 모드) */
 .tag-container {
   display: flex;
   flex-wrap: wrap;
@@ -463,40 +802,99 @@ const moveToDeletePage = () => {
   font-weight: 600;
   border: 1px solid #d1fae5;
 }
-
-.edit-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  margin-bottom: 25px;
+.allergy-tag {
+  background: #fff1f2;
+  color: #e11d48;
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid #fecaca;
 }
+
+/* [5] 나의 영양제함 카드 */
+.cabinet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.add-manual-btn {
+  background-color: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  color: #475569;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px;
+}
+.pill-card {
+  background: white;
+  border: 1px solid #f1f5f9;
+  border-radius: 16px;
+  padding: 15px;
+  text-align: center;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.pill-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+}
+.mini-pill-img {
+  width: 100%;
+  height: 100px;
+  object-fit: contain;
+  margin-bottom: 10px;
+}
+.badge-custom {
+  background-color: #64748b;
+  color: white;
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 4px;
+}
+.remove-btn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 6px 0;
+  font-size: 0.8rem;
+  color: #ef4444;
+  background: #fff1f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* [6] 수정 폼 및 체크박스 */
 .input-group {
   display: flex;
   flex-direction: column;
+  gap: 8px;
 }
 .input-group.full-width {
   grid-column: span 2;
 }
-.input-group label {
-  font-size: 0.9rem;
-  margin-bottom: 6px;
-  font-weight: 600;
-  color: #475569;
-}
 .input-group input,
-.input-group select {
-  padding: 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
+.input-group select,
+.input-group textarea {
+  padding: 12px 16px;
+  border: 2px solid #f1f5f9;
+  border-radius: 12px;
   font-size: 1rem;
 }
-
-.category-edit-box {
-  margin-top: 25px;
-  padding: 20px;
-  background: #f8fafc;
-  border-radius: 16px;
+.input-group input:focus {
+  outline: none;
+  border-color: #42b983;
+  background: #f0fdf4;
 }
+
 .checkbox-group {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -512,21 +910,24 @@ const moveToDeletePage = () => {
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   cursor: pointer;
-  font-size: 0.9rem;
   font-weight: 600;
   color: #64748b;
-  transition: 0.2s;
 }
-.checkbox-item input {
+.checkbox-item input[type="checkbox"] {
   display: none;
 }
 .checkbox-item.active {
   background: #42b983;
   color: white;
   border-color: #42b983;
-  box-shadow: 0 4px 10px rgba(66, 185, 131, 0.2);
+}
+.checkbox-item.allergy-item.active {
+  background: #f43f5e;
+  color: white;
+  border-color: #f43f5e;
 }
 
+/* [7] 메인 버튼들 (수정, 저장, 취소) */
 .main-btn {
   width: 100%;
   padding: 16px;
@@ -535,28 +936,187 @@ const moveToDeletePage = () => {
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.2s;
 }
 .edit-btn {
-  background: #1e293b;
+  background-color: #518dee;
   color: white;
   margin-top: 20px;
+}
+.edit-btn:hover {
+  background-color: #3b76d6;
+  transform: translateY(-2px);
 }
 .save-btn {
   background: #42b983;
   color: white;
-  margin-top: 20px;
 }
 .cancel-btn {
   background: #f1f5f9;
   color: #64748b;
-  margin-top: 10px;
 }
 .button-group {
   display: flex;
   gap: 10px;
+  margin-top: 20px;
 }
 
+/* [8] 모달 스타일 및 모달 버튼 (🚩 복구 완료) */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+.modal-card {
+  background: white;
+  width: 90%;
+  max-width: 450px;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+.modal-header {
+  padding: 24px 24px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-header h4 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1e293b;
+}
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #94a3b8;
+  cursor: pointer;
+}
+.modal-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.modal-footer {
+  padding: 16px 24px 24px;
+  display: flex;
+  gap: 12px;
+}
+
+/* 🚩 모달 내 취소/등록 버튼 스타일 */
+.btn-cancel {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  background: #f1f5f9;
+  color: #64748b;
+  border: none;
+  transition: 0.2s;
+}
+.btn-cancel:hover {
+  background: #e2e8f0;
+}
+.btn-submit {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  background: #42b983;
+  color: white;
+  border: none;
+  transition: 0.2s;
+}
+.btn-submit:hover {
+  background: #38a169;
+  box-shadow: 0 4px 12px rgba(66, 185, 131, 0.3);
+}
+
+/* [9] 성분 태그 및 자동완성 */
+.selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.ing-tag {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.search-wrap {
+  position: relative;
+}
+.autocomplete-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  z-index: 2100;
+  max-height: 150px;
+  overflow-y: auto;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  padding: 0;
+  list-style: none;
+  margin-top: 5px;
+}
+.autocomplete-list li {
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.autocomplete-list li:hover {
+  background: #f8fafc;
+  color: #42b983;
+}
+
+/* [10] 비밀번호 변경 영역 */
+.password-edit-area {
+  margin-top: 20px;
+  grid-column: span 2;
+}
+.pw-toggle-btn {
+  width: 100%;
+  padding: 12px;
+  background: white;
+  color: #6366f1;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pw-inputs {
+  animation: slideDown 0.3s ease-out;
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* [11] 회원 탈퇴 */
 .withdrawal-area {
   margin-top: 40px;
   padding-top: 20px;
@@ -566,18 +1126,73 @@ const moveToDeletePage = () => {
 .btn-text-danger {
   background: none;
   border: none;
-  padding: 0;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 0.9rem;
   color: #adb5bd;
   font-weight: 600;
-  transition: all 0.3s ease;
-  text-decoration: none;
+  cursor: pointer;
+  font-size: 0.9rem;
 }
 .btn-text-danger:hover {
   color: #e11d48;
   text-decoration: underline;
-  text-underline-offset: 4px;
+}
+
+/* [12] 📱 모바일 반응형 */
+@media (max-width: 768px) {
+  .mypage-wrapper {
+    padding: 20px 10px;
+  }
+  .profile-card {
+    padding: 25px 15px;
+    border-radius: 0;
+  }
+  .info-grid,
+  .edit-grid {
+    grid-template-columns: 1fr;
+  }
+  .input-group.full-width,
+  .password-edit-area {
+    grid-column: span 1;
+  }
+  .profile-summary {
+    flex-direction: column;
+    text-align: center;
+  }
+  .avatar-placeholder {
+    margin-right: 0;
+    margin-bottom: 15px;
+  }
+  .pill-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .checkbox-group {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .button-group,
+  .modal-footer {
+    flex-direction: column;
+  } /* 모바일에서 버튼 세로로 */
+}
+
+/* 유틸리티 */
+.mt-3 {
+  margin-top: 15px !important;
+}
+.mt-4 {
+  margin-top: 20px !important;
+}
+.required {
+  color: #ef4444;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

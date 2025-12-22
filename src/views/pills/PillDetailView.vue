@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, nextTick, ref, computed } from "vue";
+import { onMounted, nextTick, ref, computed, watch } from "vue";
 import { useRoute, RouterView } from "vue-router";
 import { usePillStore } from "@/stores/pills";
 import { useAuthStore } from "@/stores/auth";
@@ -10,7 +10,144 @@ const route = useRoute();
 const store = usePillStore();
 const authStore = useAuthStore();
 
+const reviewSection = ref(null);
+
 const showReviews = ref(false);
+
+const isEnrolled = ref(false); // 현재 영양제함에 있는지 여부
+
+const myPills = ref([]); // 내 일반 영양제함 리스트
+const myCustomPills = ref([]); // 내 커스텀 영양제함 리스트
+
+//  영양제함에 들어있는지 확인 및 중복 체크
+// 🚩 1. 내 모든 영양제 데이터 로드 (중복 분석용)
+const fetchMyCabinet = async () => {
+  if (!authStore.isLoggedIn) return;
+  try {
+    const config = { headers: { Authorization: `Token ${authStore.token}` } };
+    const [res1, res2] = await Promise.all([
+      axios.get("http://localhost:8000/pills/my-pills/", config),
+      axios.get("http://localhost:8000/pills/custom-pills/", config),
+    ]);
+    myPills.value = res1.data;
+    myCustomPills.value = res2.data;
+  } catch (err) {
+    console.error("함 데이터 로드 실패:", err);
+  }
+};
+
+// 🚩 2. 중복 성분 분석 계산 로직
+const duplicateNutrients = computed(() => {
+  // 현재 보고 있는 영양제의 성분 정보가 없으면 빈 배열 반환
+  if (!store.pill || !store.pill.nutrient_details) return [];
+
+  // 현재 영양제의 성분 이름들 (예: ['비타민C', '아연'])
+  const currentIngredients = store.pill.nutrient_details.map(
+    (n) => n.substance_name
+  );
+  const duplicates = [];
+
+  // A. 일반 영양제(DB)와 비교
+  myPills.value.forEach((item) => {
+    // 현재 보고 있는 제품 본인은 비교에서 제외
+    if (item.pill.id === store.pill.id) return;
+
+    item.pill.nutrient_details?.forEach((nut) => {
+      if (currentIngredients.includes(nut.substance_name)) {
+        duplicates.push({
+          nutrient: nut.substance_name,
+          pillName: item.pill.PRDLST_NM,
+          type: "일반",
+        });
+      }
+    });
+  });
+
+  // B. 직접 등록한 영양제(Custom)와 비교
+  myCustomPills.value.forEach((item) => {
+    if (!item.ingredients) return;
+
+    // 저장된 "비타민C, 아연" 문자열을 배열로 변환
+    const customIngs = item.ingredients.split(",").map((s) => s.trim());
+
+    customIngs.forEach((ing) => {
+      if (currentIngredients.includes(ing)) {
+        duplicates.push({
+          nutrient: ing,
+          pillName: item.name,
+          type: "개인",
+        });
+      }
+    });
+  });
+
+  // 결과에서 중복으로 쌓인 데이터 정제 (선택사항: 같은 성분이 여러 제품에 있을 수 있음)
+  return duplicates;
+});
+
+// 🚩 추가: 현재 영양제가 내 함에 있는지 확인하는 함수
+const checkEnrollmentStatus = async () => {
+  if (!authStore.isLoggedIn) return;
+
+  try {
+    const response = await axios.get(
+      `http://localhost:8000/pills/${route.params.pill_pk}/is-enrolled/`,
+      { headers: { Authorization: `Token ${authStore.token}` } }
+    );
+    // 서버에서 받은 결과(true/false)를 변수에 저장
+    isEnrolled.value = response.data.is_enrolled;
+  } catch (err) {
+    console.error("상태 확인 실패:", err);
+  }
+};
+
+watch(
+  () => route.name,
+  async (newName) => {
+    if (newName === "thread_list") {
+      // 라우트가 바뀌고 DOM이 렌더링될 때까지 잠깐 대기
+      await nextTick();
+      scrollToReviews();
+    }
+  }
+);
+
+const scrollToReviews = () => {
+  // RouterView가 들어가는 위치나 후기 섹션으로 스크롤
+  if (reviewSection.value) {
+    reviewSection.value.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
+};
+
+const handleTogglePill = async () => {
+  if (!authStore.isLoggedIn) {
+    alert("로그인이 필요한 기능입니다.");
+    return;
+  }
+
+  try {
+    const method = isEnrolled.value ? "delete" : "post";
+    const config = { headers: { Authorization: `Token ${authStore.token}` } };
+
+    await axios({
+      method: method,
+      url: `http://localhost:8000/pills/${route.params.pill_pk}/toggle/`,
+      ...config,
+    });
+
+    isEnrolled.value = !isEnrolled.value;
+    alert(
+      isEnrolled.value
+        ? "영양제함에 담았습니다! 💊"
+        : "영양제함에서 삭제했습니다."
+    );
+  } catch (err) {
+    console.error(err);
+  }
+};
 
 //  [추가] 알러지 경고 로직
 const dangerAllergens = computed(() => {
@@ -41,6 +178,10 @@ const toggleReviews = async () => {
 onMounted(async () => {
   const pillId = route.params.pill_pk;
   store.getPillDetail(pillId);
+
+  // 페이지 로드 시 , 영양제가 사용자 영양제함에 있는지 확인
+  checkEnrollmentStatus();
+  fetchMyCabinet();
 
   // 🚩 유저의 최신 알러지 정보를 가져오기 위해 프로필 요청 추가
   if (authStore.isLoggedIn) {
@@ -84,6 +225,35 @@ onMounted(async () => {
           </div>
         </div>
       </div>
+
+      <div
+        v-if="duplicateNutrients.length > 0"
+        class="duplicate-warning-banner"
+      >
+        <div class="banner-content">
+          <div class="warning-icon yellow">
+            <i class="bi bi-exclamation-circle-fill">!</i>
+          </div>
+          <div class="warning-text">
+            <h4>중복 섭취 주의</h4>
+            <p>
+              현재 섭취 중인 제품과 성분이 겹칩니다. 과다 섭취에 주의하세요!
+            </p>
+
+            <div class="duplicate-list">
+              <div
+                v-for="(item, idx) in duplicateNutrients"
+                :key="idx"
+                class="duplicate-item"
+              >
+                • <span class="dup-nut">{{ item.nutrient }}</span>
+                <span class="dup-pill">({{ item.pillName }})</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <section class="header-section">
         <div class="img-box">
           <img
@@ -207,7 +377,7 @@ onMounted(async () => {
           <div v-else class="empty-text">해당 정보 없음</div>
         </div>
 
-        <div class="info-item">
+        <div class="info-item" ref="reviewSection">
           <h3>🌟 사용자 후기</h3>
           <div class="community-cta-container">
             <RouterLink
@@ -232,6 +402,14 @@ onMounted(async () => {
             </RouterLink>
           </div>
         </div>
+
+        <button
+          @click="handleTogglePill"
+          :class="['cabinet-btn', { 'is-taking': isEnrolled }]"
+        >
+          <i :class="isEnrolled ? 'bi bi-archive-fill' : 'bi bi-archive'"></i>
+          {{ isEnrolled ? "섭취 중인 영양제" : "영양제함에 담기" }}
+        </button>
       </section>
 
       <hr class="divider" />
@@ -648,20 +826,20 @@ onMounted(async () => {
   justify-content: center;
   width: 100%;
   padding: 14px 0;
-  background-color: #03C75A; /* 네이버 쇼핑 시그니처 그린 */
+  background-color: #1c7ed6; /* 네이버 쇼핑 시그니처 그린 */
   color: white;
   font-size: 1.1rem;
   font-weight: 700;
   border-radius: 8px;
   text-decoration: none; /* a 태그 밑줄 제거 */
   transition: all 0.2s ease;
-  box-shadow: 0 4px 6px rgba(3, 199, 90, 0.2);
+  box-shadow: 0 4px 6px rgba(3, 46, 82, 0.3);
 }
 
 .buy-btn:hover {
-  background-color: #02b150;
+  background-color: #99cbf1;
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(3, 199, 90, 0.3);
+  box-shadow: 0 6px 12px rgba(3, 46, 82, 0.3);
 }
 
 .buy-btn.disabled {
@@ -682,5 +860,70 @@ onMounted(async () => {
     width: 100%;
     max-width: 300px; /* 너무 넓어지지 않게 제한 */
   }
+}
+
+/* 영양제함 담기 버튼 */
+.cabinet-btn {
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.cabinet-btn.is-taking {
+  background: #42b983;
+  color: white;
+  border-color: #42b983;
+}
+
+/* 중복 섭취 스타일 */
+.duplicate-warning-banner {
+  background-color: #fffbeb; /* Amber 50 */
+  border: 1px solid #fef3c7; /* Amber 200 */
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 20px;
+  animation: slideDown 0.4s ease-out;
+}
+
+.warning-icon.yellow {
+  background-color: #f59e0b; /* Amber 500 */
+  color: white;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.warning-text h4 {
+  margin: 0 0 6px 0;
+  color: #92400e;
+  font-weight: 800;
+}
+
+.duplicate-list {
+  padding: 10px;
+}
+
+.duplicate-item {
+  font-size: 0.9rem;
+  color: #b45309;
+  margin-bottom: 4px;
+}
+
+.dup-nut {
+  font-weight: 800;
+  text-decoration: underline;
+}
+
+.dup-pill {
+  font-size: 0.85rem;
+  color: #d97706;
 }
 </style>

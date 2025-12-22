@@ -133,6 +133,22 @@ const router = createRouter({
       component: SubstancePillsView,
     },
   ],
+  scrollBehavior(to, from, savedPosition) {
+    // 🚩 만약 상세 페이지에서 그 안의 하위 후기 페이지로 가는 경우라면
+    // 스크롤을 맨 위로 올리지 않고 현재 위치를 유지하거나 watch에서 제어하게 합니다.
+    if (
+      to.params.pill_pk &&
+      from.params.pill_pk &&
+      to.params.pill_pk === from.params.pill_pk
+    ) {
+      return false; // 스크롤 위치를 변경하지 않음
+    }
+
+    if (savedPosition) {
+      return savedPosition;
+    }
+    return { top: 0 };
+  },
 });
 
 router.beforeEach((to, from, next) => {
