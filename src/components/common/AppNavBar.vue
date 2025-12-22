@@ -39,6 +39,7 @@ const handleLogout = () => {
             >님</span
           ></RouterLink
         >
+        <span class="divider">|</span>
         <a href="#" @click.prevent="handleLogout" class="nav-link">로그아웃</a>
       </template>
     </div>
@@ -104,5 +105,35 @@ const handleLogout = () => {
 
 .signup-btn:hover {
   background-color: #1864ab;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: 1rem 1rem; /* 좌우 여백을 줄여 공간 확보 */
+  }
+
+  .logo a {
+    font-size: 1.1rem; /* 로고 크기도 약간 축소 */
+  }
+
+  .menu {
+    gap: 10px; /* 메뉴 사이 간격을 15px -> 10px로 축소 */
+  }
+
+  /* 메뉴 글자 크기 축소 */
+  .nav-link {
+    font-size: 0.9rem; /* 기존 0.95rem -> 0.8rem */
+  }
+
+  /* 회원가입 버튼 크기 및 패딩 축소 */
+  .signup-btn {
+    padding: 6px 12px; /* 버튼 크기 축소 */
+    font-size: 0.8rem;  /* 기존 0.9rem -> 0.8rem */
+  }
+
+  /* 구분선 크기 축소 */
+  .divider {
+    font-size: 0.7rem;
+  }
 }
 </style>

@@ -54,7 +54,7 @@ const goDetail = () => {
 
 .image-wrapper {
   width: 100%;
-  height: 200px; /* 이미지 높이 고정 */
+  height: 120px; /* 이미지 높이 고정 */
   background-color: #f8f9fa;
   display: flex;
   align-items: center;
@@ -69,10 +69,10 @@ const goDetail = () => {
 }
 
 .card-body {
-  padding: 20px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .company-name {
@@ -102,4 +102,34 @@ const goDetail = () => {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+
+@media (max-width: 768px) {
+  /* 1. 기능(효능) 섹션 숨기기 */
+  .product-func {
+    display: none !important;
+  }
+
+  /* 2. 카드 내부 전체적인 압축 (추가 권장) */
+  .card-container { /* 실제 컨테이너 클래스명으로 확인 필요 */
+    padding: 10px;
+  }
+
+  /* 3. 이미지 높이 조절 (세로를 더 줄이고 싶다면) */
+  .pill-image {
+    height: 100px; /* 높이를 100px 정도로 고정 */
+    object-fit: contain;
+  }
+
+  /* 4. 제품명 줄바꿈 제한 (높이 일정하게 유지) */
+  .product-name {
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* 2줄까지만 보여줌 */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
 </style>
