@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { usePillStore } from '@/stores/pills'
 import PillCard from '@/components/pills/PillCard.vue'
@@ -23,9 +23,30 @@ const shapeOptions = [
 const initialShapes = route.query.shapes ? route.query.shapes.split(',') : []
 const selectedShapes = ref(initialShapes)
 
+const scrollToTop = (duration) => {
+  const start = window.scrollY
+  const startTime = performance.now()
+
+  const animateScroll = (currentTime) => {
+    const timeElapsed = currentTime - startTime
+    const progress = Math.min(timeElapsed / duration, 1)
+
+    // Easing 함수 (부드러운 감속 효과: easeOutCubic)
+    // 이 수식을 바꾸면 움직임 느낌이 달라집니다.
+    const ease = 1 - Math.pow(1 - progress, 3)
+
+    window.scrollTo(0, start * (1 - ease))
+
+    if (timeElapsed < duration) {
+      requestAnimationFrame(animateScroll)
+    }
+  }
+
+  requestAnimationFrame(animateScroll)
+}
 
 // 2. 데이터 요청 함수 (페이지 번호를 받아서 처리)
-const fetchPills = (page) => {
+const fetchPills = async (page, saveHistory = true) => {
   currentPage.value = page 
   
   // 검색 조건 객체 생성
@@ -34,6 +55,9 @@ const fetchPills = (page) => {
     search_type: searchType.value,
     keyword: keyword.value,
     shapes: selectedShapes.value.length > 0 ? selectedShapes.value.join(',') : undefined // 비어있으면 URL에서 제거
+  }
+  if (saveHistory) {
+    router.push({ query: queryParams }).catch(() => {})
   }
 
   // API 요청 파라미터 (store용)
@@ -45,17 +69,18 @@ const fetchPills = (page) => {
 
   // [핵심] 상태가 변경될 때마다 URL을 업데이트 (history에 쌓임)
   // router.push를 사용하면 뒤로가기 시 이전 상태(URL)로 돌아갈 수 있음
-  router.push({ query: queryParams })
+  // router.push({ query: queryParams })
 
   // 데이터 가져오기
-  store.getPills(page, apiParams)
-  
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+  await store.getPills(page, apiParams)
+  scrollToTop(800)
+
+  // window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 // 3. 검색 버튼 클릭 (1페이지부터 검색)
 const searchPills = () => {
-  fetchPills(1)
+  fetchPills(1, true)
 }
 
 // 4. 초기화 함수
@@ -63,7 +88,7 @@ const resetSearch = () => {
   searchType.value = ''
   keyword.value = ''
   selectedShapes.value = []
-  fetchPills(1)
+  fetchPills(1, true)
 }
 
 // ▼▼▼ 5. 페이지네이션 로직 (Computed) ▼▼▼
@@ -106,7 +131,22 @@ const moveToPrevGroup = () => {
 }
 
 onMounted(() => {
-  fetchPills(currentPage.value)
+  fetchPills(currentPage.value, false)
+})
+
+watch(() => route.query, (newQuery, oldQuery) => {
+  // 쿼리가 실제로 바뀌었는지 확인
+  if (JSON.stringify(newQuery) !== JSON.stringify(oldQuery)) {
+    
+    // URL에 있는 값으로 변수들 덮어쓰기 (동기화)
+    currentPage.value = Number(newQuery.page) || 1
+    searchType.value = newQuery.search_type || ''
+    keyword.value = newQuery.keyword || ''
+    selectedShapes.value = newQuery.shapes ? newQuery.shapes.split(',') : []
+
+    // 데이터만 새로고침 (이미 URL은 브라우저가 바꿨으므로 false)
+    fetchPills(currentPage.value, false)
+  }
 })
 </script>
 

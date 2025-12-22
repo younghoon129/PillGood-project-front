@@ -1,51 +1,118 @@
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, onMounted, computed, watch, onUnmounted, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import PillCard from '@/components/pills/PillCard.vue'
 
 const route = useRoute()
+const router = useRouter()
 const subId = route.params.substanceId
 
 // 상태 변수
 const pills = ref([])
 const totalCount = ref(0)
-const currentPage = ref(1)
 const substanceName = ref('')
+const currentPage = ref(Number(route.query.page) || 1)
+
 
 // 필터 상태
-const selectedCategory = ref([]) 
+const selectedCategory = ref(route.query.category ? route.query.category.split(',') : [])
 const categoryOptions = ref([]) 
 const shapeOptions = ['정', '캡슐', '액상', '분말', '과립', '환', '젤리', '바', '기타']
-const selectedShapes = ref([])
+const selectedShapes = ref(route.query.shapes ? route.query.shapes.split(',') : [])
+
+const scrollToTopSmooth = (duration = 800) => {
+  const start = window.scrollY
+  const startTime = performance.now()
+
+  const animate = (currentTime) => {
+    const elapsed = currentTime - startTime
+    const progress = Math.min(elapsed / duration, 1)
+    
+    // easeOutCubic: 부드럽게 감속하는 효과
+    const ease = 1 - Math.pow(1 - progress, 3) 
+
+    window.scrollTo(0, start * (1 - ease))
+
+    if (progress < 1) {
+      requestAnimationFrame(animate)
+    }
+  }
+  requestAnimationFrame(animate)
+}
 
 // 데이터 가져오기
-const fetchPills = (page = 1) => {
-  currentPage.value = page
-  
-  axios.get(`http://127.0.0.1:8000/pills/substances/${subId}/pills/`, {
-    params: {
-      page: page,
-      category: selectedCategory.value.join(','), 
-      shapes: selectedShapes.value.join(',')
-    }
-  })
-  .then(res => {
-    pills.value = res.data.results
-    totalCount.value = res.data.count
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  })
+const fetchPills = async (page, saveHistory = true) => {
+  currentPage.value = page 
+
+  const queryParams = {
+    page,
+    search_type: searchType.value,
+    keyword: keyword.value,
+    shapes: selectedShapes.value.length > 0
+      ? selectedShapes.value.join(',')
+      : undefined
+  }
+
+  if (saveHistory) {
+    router.push({ query: queryParams }).catch(() => {})
+  }
+
+  const apiParams = {
+    search_type: searchType.value,
+    keyword: keyword.value,
+    shapes: selectedShapes.value.join(',')
+  }
+
+  // 1️⃣ 데이터 요청
+  await store.getPills(page, apiParams)
+
+  // 2️⃣ DOM 렌더 완료 대기
+  await nextTick()
+
+  // 3️⃣ 전체 페이지 기준 부드러운 스크롤
+  scrollToTop(800)
 }
 
 // 초기 데이터 로드
 onMounted(async () => {
-  const subRes = await axios.get(`http://127.0.0.1:8000/pills/substances/${subId}/`)
-  substanceName.value = subRes.data.name
-  
-  const catRes = await axios.get('http://127.0.0.1:8000/pills/categories/')
-  categoryOptions.value = catRes.data
-  
-  fetchPills(1)
+  // 🔥 [핵심] 브라우저의 자동 스크롤 복원 기능 끄기
+  // 뒤로가기 시 브라우저가 멋대로 스크롤 위치를 잡는 것을 방지
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual'
+  }
+
+  try {
+    // 상단 정보 및 카테고리 옵션 로드
+    const subRes = await axios.get(`http://127.0.0.1:8000/pills/substances/${subId}/`)
+    substanceName.value = subRes.data.name
+    
+    const catRes = await axios.get('http://127.0.0.1:8000/pills/categories/')
+    categoryOptions.value = catRes.data
+    
+    // 초기 데이터 로드
+    fetchPills()
+  } catch (err) {
+    console.error("초기 데이터 로드 실패:", err)
+  }
+})
+onUnmounted(() => {
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'auto'
+  }
+})
+
+watch(() => route.query, (newQuery, oldQuery) => {
+  if (JSON.stringify(newQuery) !== JSON.stringify(oldQuery)) {
+    currentPage.value = Number(newQuery.page) || 1
+    searchType.value = newQuery.search_type || ''
+    keyword.value = newQuery.keyword || ''
+    selectedShapes.value = newQuery.shapes
+      ? newQuery.shapes.split(',')
+      : []
+
+    fetchPills(currentPage.value, false)
+  }
 })
 
 // 페이지네이션 로직
@@ -86,7 +153,7 @@ const pageNumbers = computed(() => {
               type="checkbox" 
               :value="cat.name" 
               v-model="selectedCategory" 
-              @change="fetchPills(1)"
+              @change="changePage(1)"
               class="chip-input"
             >
             <span class="chip-label">{{ cat.name }}</span>
@@ -107,7 +174,7 @@ const pageNumbers = computed(() => {
               type="checkbox" 
               :value="shape" 
               v-model="selectedShapes" 
-              @change="fetchPills(1)"
+              @change="changePage(1)"
               class="chip-input"
             >
             <span class="chip-label">{{ shape }}</span>
@@ -134,7 +201,7 @@ const pageNumbers = computed(() => {
       <button 
         v-for="p in pageNumbers" 
         :key="p" 
-        @click="fetchPills(p)" 
+        @click="changePage(p)" 
         :class="['page-btn', { active: currentPage === p }]"
       >
         {{ p }}
