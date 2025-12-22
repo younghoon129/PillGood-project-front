@@ -30,7 +30,10 @@
         <h1 class="post-title">{{ thread.title }}</h1>
         <div class="post-meta">
           <span class="author">
-            작성자: <strong>{{ thread.user?.first_name || "익명" }}</strong>
+            작성자:
+            <strong>{{
+              thread.user?.first_name || thread.user?.username || "익명"
+            }}</strong>
           </span>
           <span class="divider"></span>
           <span class="date">{{ formatDateTime(thread.created_at) }}</span>

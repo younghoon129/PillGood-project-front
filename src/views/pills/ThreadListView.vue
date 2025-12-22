@@ -44,7 +44,7 @@
                 <span class="avatar-sm">{{
                   (thread.user?.first_name || "익")[0]
                 }}</span>
-                {{ thread.user?.first_name || "익명" }}
+                {{ thread.user?.first_name || thread.user?.username || "익명" }}
               </span>
               <span class="date">{{ formatDateTime(thread.created_at) }}</span>
             </div>

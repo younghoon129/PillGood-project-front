@@ -276,22 +276,28 @@ onMounted(async () => {
           <div class="purchase-box">
             <div v-if="store.pill.price > 0" class="price-info">
               <span class="price-label">최저가 예측</span>
-              <span class="price-value">{{ Number(store.pill.price).toLocaleString() }}원</span>
+              <span class="price-value"
+                >{{ Number(store.pill.price).toLocaleString() }}원</span
+              >
             </div>
 
-            <a 
-              v-if="store.pill.price > 0 && store.pill.purchase_url" 
-              :href="store.pill.purchase_url" 
-              target="_blank" 
+            <a
+              v-if="store.pill.price > 0 && store.pill.purchase_url"
+              :href="store.pill.purchase_url"
+              target="_blank"
               class="buy-btn"
             >
-              {{ store.pill.mall_name || '판매처' }}로 이동 🚀
+              {{ store.pill.mall_name || "판매처" }}로 이동 🚀
             </a>
-            
-            <button v-else-if="store.pill.price === -1" class="buy-btn disabled" disabled>
+
+            <button
+              v-else-if="store.pill.price === -1"
+              class="buy-btn disabled"
+              disabled
+            >
               온라인 판매처를 찾을 수 없습니다 😢
             </button>
-            
+
             <button v-else class="buy-btn disabled" disabled>
               가격 정보 분석 중...
             </button>
@@ -817,7 +823,7 @@ onMounted(async () => {
   font-size: 1.6rem;
   font-weight: 800;
   color: #d11; /* 가격 강조색 (빨강 계열) */
-  font-family: 'Roboto', sans-serif; /* 숫자 폰트 깔끔하게 */
+  font-family: "Roboto", sans-serif; /* 숫자 폰트 깔끔하게 */
 }
 
 .buy-btn {
@@ -855,7 +861,7 @@ onMounted(async () => {
     width: 100%; /* 모바일에서는 꽉 차게 */
     align-items: center;
   }
-  
+
   .buy-btn {
     width: 100%;
     max-width: 300px; /* 너무 넓어지지 않게 제한 */
