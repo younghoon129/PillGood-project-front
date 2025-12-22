@@ -1,31 +1,55 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { usePillStore } from '@/stores/pills'
 import PillCard from '@/components/pills/PillCard.vue'
 
 const store = usePillStore()
+const router = useRouter()
+const route = useRoute()
+
 
 // 1. 상태 변수
-const searchType = ref('') 
-const keyword = ref('')
+const searchType = ref(route.query.search_type || '') 
+const keyword = ref(route.query.keyword || '')
+const currentPage = ref(Number(route.query.page) || 1) // URL의 page는 문자열이므로 숫자로 변환
+
+// shapeOptions는 고정값이므로 그대로 둠
 const shapeOptions = [
   '정(알약)', '캡슐', '액상', '분말(가루)', '과립', '환', '젤리', '바', '기타'
 ]
-const selectedShapes = ref([]) 
-const currentPage = ref(1) // 현재 페이지 번호 추가
+
+// shapes는 URL에서 콤마로 구분된 문자열로 오므로 배열로 변환
+const initialShapes = route.query.shapes ? route.query.shapes.split(',') : []
+const selectedShapes = ref(initialShapes)
+
 
 // 2. 데이터 요청 함수 (페이지 번호를 받아서 처리)
 const fetchPills = (page) => {
-  currentPage.value = page // 현재 페이지 상태 업데이트
+  currentPage.value = page 
   
-  const params = {
+  // 검색 조건 객체 생성
+  const queryParams = {
+    page: page,
+    search_type: searchType.value,
+    keyword: keyword.value,
+    shapes: selectedShapes.value.length > 0 ? selectedShapes.value.join(',') : undefined // 비어있으면 URL에서 제거
+  }
+
+  // API 요청 파라미터 (store용)
+  const apiParams = {
     search_type: searchType.value,
     keyword: keyword.value,
     shapes: selectedShapes.value.join(',') 
   }
-  store.getPills(page, params)
+
+  // [핵심] 상태가 변경될 때마다 URL을 업데이트 (history에 쌓임)
+  // router.push를 사용하면 뒤로가기 시 이전 상태(URL)로 돌아갈 수 있음
+  router.push({ query: queryParams })
+
+  // 데이터 가져오기
+  store.getPills(page, apiParams)
   
-  // 페이지 이동 시 부드럽게 스크롤 이동
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
@@ -82,7 +106,7 @@ const moveToPrevGroup = () => {
 }
 
 onMounted(() => {
-  fetchPills(1)
+  fetchPills(currentPage.value)
 })
 </script>
 
