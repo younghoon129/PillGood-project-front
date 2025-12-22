@@ -1,7 +1,19 @@
 <script setup>
+import { ref,watch } from 'vue'
 import { useRouter } from 'vue-router'
+import ChatBotView from './ChatBotView.vue'
 
 const router = useRouter()
+
+const showChatModal = ref(false)
+
+watch(showChatModal, (newValue) => {
+  if (newValue) {
+    document.body.style.overflow = 'hidden' // 스크롤 잠금
+  } else {
+    document.body.style.overflow = '' // 스크롤 해제
+  }
+})
 
 // '영양제 리스트' 페이지로 이동
 const goPillList = () => {
@@ -14,6 +26,10 @@ const goRecommendation = () => {
   router.push({ name: 'recommendation' })
 }
 
+const goChatBot = () => {
+  showChatModal.value = true
+}
+
 // 준비 중 알림 함수
 const alertNotReady = () => {
   alert("준비 중인 기능입니다! 조금만 기다려주세요 🛠️")
@@ -21,45 +37,53 @@ const alertNotReady = () => {
 </script>
 
 <template>
-  <div class="main-container">
-    <section class="hero">
-      <div class="content">
-        <h1 class="title">
-          내 몸에 딱 맞는<br />
-          <span class="highlight">영양제</span>를 찾아보세요
-        </h1>
-        <p class="subtitle">
-          수천 개의 영양제 성분과 알레르기 정보를 분석하여<br />
-          당신에게 가장 안전하고 효과적인 선택을 도와드립니다.
-        </p>
-        <button @click="goPillList" class="cta-button">
-          영양제 찾아보기 →
-        </button>
-      </div>
-      
-      <div class="visual">
-        <div class="circle-deco">💊</div>
-      </div>
-    </section>
+  <div class="home-wrapper">
+    <div class="main-container" :class="{ 'is-blurred': showChatModal }">
+      <section class="hero">
+        <div class="content">
+          <h1 class="title">
+            내 몸에 딱 맞는<br />
+            <span class="highlight">영양제</span>를 찾아보세요
+          </h1>
+          <p class="subtitle">
+            수천 개의 영양제 성분과 알레르기 정보를 분석하여<br />
+            당신에게 가장 안전하고 효과적인 선택을 도와드립니다.
+          </p>
+          <button @click="goPillList" class="cta-button">
+            영양제 찾아보기 →
+          </button>
+        </div>
+        
+        <div class="visual">
+          <div class="circle-deco">💊</div>
+        </div>
+      </section>
 
-    <section class="features">
-      
-      <div class="feature-item" @click="alertNotReady">
-        <h3>🔍 성분 분석</h3>
-        <p>복잡한 성분표를<br>쉽게 확인하세요</p>
-      </div>
+      <section class="features">
+        <div class="feature-item" @click="alertNotReady">
+          <h3>🔍 성분 분석</h3>
+          <p>복잡한 성분표를<br>쉽게 확인하세요</p>
+        </div>
 
-      <div class="feature-item" @click="alertNotReady">
-        <h3>⚠️ 알레르기 체크</h3>
-        <p>나에게 위험한 성분을<br>미리 알려드려요</p>
-      </div>
+        <div class="feature-item" @click="goChatBot">
+          <h3>🤖 AI 추천 서비스</h3>
+          <p>나의 상황에 필요한 <br>영양제를 알려드려요</p>
+        </div>
 
-      <div class="feature-item" @click="goRecommendation">
-        <h3>📋 맞춤 추천</h3>
-        <p>증상과 목적에 맞는<br>영양제를 찾으세요</p>
-      </div>
+        <div class="feature-item" @click="goRecommendation">
+          <h3>📋 맞춤 추천</h3>
+          <p>증상과 목적에 맞는<br>영양제를 찾으세요</p>
+        </div>
+      </section>
+    </div>
 
-    </section>
+    <Transition name="modal-fade">
+      <div v-if="showChatModal" class="modal-overlay" @click.self="showChatModal = false">
+        <div class="modal-window">
+          <ChatBotView @close="showChatModal = false" />
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -210,5 +234,47 @@ const alertNotReady = () => {
   .title { font-size: 2.5rem; }
   .circle-deco { width: 200px; height: 200px; font-size: 5rem; }
   .features { flex-direction: column; }
+}
+
+/* 🚩 블러 효과: 모달이 켜졌을 때 배경 흐리게 */
+.is-blurred {
+  filter: blur(8px);
+  transition: filter 0.3s ease;
+  pointer-events: none; /* 배경 클릭 방지 */
+}
+
+/* 모달 전체 배경 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+/* 모달 창 크기 및 애니메이션 */
+.modal-window {
+  width: 100%;
+  max-width: 600px;
+  height: 80vh;
+  background: white;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  display: flex;
+}
+
+/* 모달 애니메이션 */
+.modal-fade-enter-active, .modal-fade-leave-active {
+  transition: all 0.4s ease;
+}
+.modal-fade-enter-from, .modal-fade-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
 }
 </style>

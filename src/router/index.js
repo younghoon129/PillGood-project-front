@@ -19,6 +19,7 @@ import MyPageView from "@/views/MyPageView.vue";
 import GoogleCallbackView from "@/views/GoogleCallbackView.vue";
 import ThreadUpdateView from "@/views/pills/ThreadUpdateView.vue";
 import UserDeleteView from "@/views/UserDeleteView.vue";
+import ChatBotView from "@/views/ChatBotView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -53,6 +54,12 @@ const router = createRouter({
       name: "MyPage",
       component: MyPageView,
       meta: { requiresAuth: true },
+    },
+    {
+      path: '/chatbot',
+      name: 'chatbot',
+      component : ChatBotView,
+      meta: {requiresAuth:true}
     },
     // {
     //   path: '/profile/:username',
