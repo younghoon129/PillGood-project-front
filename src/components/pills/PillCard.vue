@@ -54,7 +54,7 @@ const goDetail = () => {
 
 .image-wrapper {
   width: 100%;
-  height: 120px; /* 이미지 높이 고정 */
+  height: 200px; /* 이미지 높이 고정 */
   background-color: #f8f9fa;
   display: flex;
   align-items: center;
@@ -117,7 +117,7 @@ const goDetail = () => {
 
   /* 3. 이미지 높이 조절 (세로를 더 줄이고 싶다면) */
   .pill-image {
-    height: 100px; /* 높이를 100px 정도로 고정 */
+    height: 100px; 
     object-fit: contain;
   }
 
@@ -129,6 +129,10 @@ const goDetail = () => {
     -webkit-line-clamp: 2; /* 2줄까지만 보여줌 */
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  .image-wrapper{
+    height: 150px;
   }
 }
 

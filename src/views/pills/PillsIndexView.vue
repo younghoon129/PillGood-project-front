@@ -154,7 +154,7 @@ onMounted(() => fetchPills(1))
 .chip-label { display: inline-block; padding: 8px 16px; background-color: white; border: 1px solid #dee2e6; border-radius: 50px; font-size: 0.95rem; transition: all 0.2s; cursor: pointer; }
 .chip-input:checked + .chip-label { background-color: #1c7ed6; border-color: #1c7ed6; color: white; }
 
-.pill-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 30px; }
+.pill-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 30px; }
 .no-result { text-align: center; margin-top: 60px; color: #adb5bd; font-size: 1.2rem; }
 
 /* [수정] 모바일 버전 대응 */
