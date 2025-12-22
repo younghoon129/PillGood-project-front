@@ -9,6 +9,9 @@ import { computed } from "vue";
 const authStore = useAuthStore();
 const router = useRouter();
 
+const isGenreOpen = ref(false);
+const isAllergyOpen = ref(false);
+
 const signupData = ref({
   username: "",
   password: "",
@@ -143,14 +146,14 @@ onMounted(async () => {
           <div class="gender-btns">
             <button
               type="button"
-              :class="{ active: signupData.gender === 'M' }"
+              :class="{ 'active-male': signupData.gender === 'M' }"
               @click="signupData.gender = 'M'"
             >
               남성
             </button>
             <button
               type="button"
-              :class="{ active: signupData.gender === 'F' }"
+              :class="{ 'active-female': signupData.gender === 'F' }"
               @click="signupData.gender = 'F'"
             >
               여성
@@ -167,50 +170,43 @@ onMounted(async () => {
           />
         </div>
 
-        <div class="field full">
-          <label class="section-label"
-            >관심 있는 건강 분야
-            <span class="sub-text">(복수 선택 가능)</span></label
-          >
-          <div class="category-grid">
-            <label v-for="cat in categories" :key="cat.id" class="cat-item">
-              <input
-                type="checkbox"
-                :value="cat.id"
-                v-model="signupData.interested_genres"
-                class="hidden-checkbox"
-              />
-              <div class="cat-chip">
-                <span class="check-icon">✓</span>
-                {{ cat.name }}
-              </div>
-            </label>
-          </div>
-        </div>
+        <div class="field full toggle-section">
+  <div class="toggle-header" @click="isGenreOpen = !isGenreOpen">
+    <label class="section-label">
+      관심 있는 건강 분야 
+      <span class="sub-text">(복수 선택 가능)</span>
+    </label>
+    <span class="toggle-icon" :class="{ rotated: isGenreOpen }">▼</span>
+  </div>
+  
+  <div class="toggle-content" :class="{ open: isGenreOpen }">
+    <div class="category-grid">
+      <label v-for="cat in categories" :key="cat.id" class="cat-item">
+        <input type="checkbox" :value="cat.id" v-model="signupData.interested_genres" class="hidden-checkbox" />
+        <div class="cat-chip">{{ cat.name }}</div>
+      </label>
+    </div>
+  </div>
+</div>
 
-        <div class="field full mt-3">
-          <label class="section-label allergy-label"
-            >보유 중인 알러지
-            <span class="sub-text">(해당 성분 선택)</span></label
-          >
-          <div class="category-grid">
-            <label
-              v-for="allergy in allergiesOptions"
-              :key="allergy.id"
-              class="cat-item"
-            >
-              <input
-                type="checkbox"
-                :value="allergy.id"
-                v-model="signupData.allergies"
-                class="hidden-checkbox"
-              />
-              <div class="cat-chip allergy-chip">
-                {{ allergy.name }}
-              </div>
-            </label>
-          </div>
-        </div>
+        <div class="field full toggle-section mt-3">
+  <div class="toggle-header" @click="isAllergyOpen = !isAllergyOpen">
+    <label class="section-label allergy-label">
+      보유 중인 알러지 
+      <span class="sub-text">(해당 성분 선택)</span>
+    </label>
+    <span class="toggle-icon" :class="{ rotated: isAllergyOpen }">▼</span>
+  </div>
+
+  <div class="toggle-content" :class="{ open: isAllergyOpen }">
+    <div class="category-grid">
+      <label v-for="allergy in allergiesOptions" :key="allergy.id" class="cat-item">
+        <input type="checkbox" :value="allergy.id" v-model="signupData.allergies" class="hidden-checkbox" />
+        <div class="cat-chip allergy-chip">{{ allergy.name }}</div>
+      </label>
+    </div>
+  </div>
+</div>
 
         <button type="submit" class="signup-action-btn">가입 완료</button>
       </form>
@@ -313,18 +309,74 @@ onMounted(async () => {
   transition: all 0.2s;
 }
 
-.gender-btns button.active {
-  background-color: #1c7ed6;
+.gender-btns button.active-male {
+  background-color: #9275e7f1;
   color: white;
-  border-color: #1c7ed6;
+  border-color: #9275e7f1;
+  box-shadow: 0 4px 12px rgba(112, 72, 232, 0.2);
+}
+
+.gender-btns button.active-female {
+  background-color: #f06595;
+  color: white;
+  border-color: #f06595;
+  box-shadow: 0 4px 12px rgba(240, 101, 149, 0.2);
+}
+
+/* 토글 섹션 스타일 */
+.toggle-section {
+  border: 1px solid #edf2f7;
+  border-radius: 12px;
+  background-color: #ffffff;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.toggle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  cursor: pointer;
+  background-color: #fdfdfd;
+  user-select: none;
+}
+
+.toggle-header:hover {
+  background-color: #f8f9fa;
+}
+
+.toggle-icon {
+  font-size: 0.8rem;
+  color: #adb5bd;
+  transition: transform 0.3s ease;
+}
+
+.toggle-icon.rotated {
+  transform: rotate(180deg);
+  color: #1c7ed6;
+}
+
+/* 토글 내용 애니메이션 */
+.toggle-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out, padding 0.3s ease;
+  padding: 0 20px; /* 닫혔을 때는 패딩 0 */
+}
+
+.toggle-content.open {
+  max-height: 1000px; /* 넉넉하게 설정 */
+  padding: 10px 20px 20px 20px; /* 열렸을 때 여백 확보 */
+  border-top: 1px solid #f1f3f5;
 }
 
 /* 6. 카테고리 칩(Chip) 스타일 (핵심 수정 부분) */
 .category-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  /* PC에서는 칩 크기에 맞춰 유연하게 배치 */
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 10px;
-  margin-top: 5px;
 }
 
 .cat-item {
@@ -384,15 +436,67 @@ onMounted(async () => {
 }
 
 /* 8. 반응형 처리 (모바일용) */
-@media (max-width: 480px) {
-  .signup-grid-form {
-    grid-template-columns: 1fr;
+@media (max-width: 768px) {
+  .signup-page {
+    padding: 20px 10px; /* 페이지 외곽 여백 축소 */
   }
+
+  .signup-card {
+    padding: 25px 20px; /* 카드 내부 패딩 대폭 축소 (핵심!) */
+    border-radius: 15px;
+  }
+
+  .signup-title {
+    font-size: 1.5rem;
+  }
+
+  .signup-grid-form {
+    grid-template-columns: 1fr; /* 무조건 1열로 배치 */
+    gap: 15px;
+  }
+
   .field.full {
     grid-column: span 1;
   }
+
+  /* 성별 버튼 높이 조정 */
+  .gender-btns button {
+    padding: 10px;
+    font-size: 0.9rem;
+  }
+
+  .toggle-header {
+    padding: 12px 15px;
+  }
+
+  /* 건강 분야 & 알러지 칩 그리드 조정 */
+  .category-grid {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 8px;
+  }
+
+  .cat-chip {
+    padding: 8px 5px;
+    font-size: 0.8rem;
+    height: 40px; /* 높이 통일 */
+  }
+
+  .signup-action-btn {
+    grid-column: span 1;
+    padding: 14px;
+    font-size: 1rem;
+  }
+
+  
+}
+
+/* 아주 작은 화면 (320px 이하) 대응 */
+@media (max-width: 320px) {
   .signup-card {
-    padding: 25px;
+    padding: 20px 15px;
+  }
+  .category-grid {
+    grid-template-columns: 1fr 1fr; /* 무조건 2열 배치 */
   }
 }
 
@@ -416,4 +520,6 @@ onMounted(async () => {
 .mt-3 {
   margin-top: 24px;
 }
+
+
 </style>
