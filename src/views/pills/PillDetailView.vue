@@ -273,6 +273,29 @@ onMounted(async () => {
           </div>
 
           <p class="summary">{{ store.pill.PRIMARY_FNCLTY }}</p>
+          <div class="purchase-box">
+            <div v-if="store.pill.price > 0" class="price-info">
+              <span class="price-label">최저가 예측</span>
+              <span class="price-value">{{ Number(store.pill.price).toLocaleString() }}원</span>
+            </div>
+
+            <a 
+              v-if="store.pill.price > 0 && store.pill.purchase_url" 
+              :href="store.pill.purchase_url" 
+              target="_blank" 
+              class="buy-btn"
+            >
+              {{ store.pill.mall_name || '판매처' }}로 이동 🚀
+            </a>
+            
+            <button v-else-if="store.pill.price === -1" class="buy-btn disabled" disabled>
+              온라인 판매처를 찾을 수 없습니다 😢
+            </button>
+            
+            <button v-else class="buy-btn disabled" disabled>
+              가격 정보 분석 중...
+            </button>
+          </div>
         </div>
       </section>
 
@@ -767,6 +790,75 @@ onMounted(async () => {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+.purchase-box {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px dashed #eee; /* 위쪽 구분선 */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.price-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.price-label {
+  font-size: 0.9rem;
+  color: #888;
+  font-weight: 500;
+}
+
+.price-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #d11; /* 가격 강조색 (빨강 계열) */
+  font-family: 'Roboto', sans-serif; /* 숫자 폰트 깔끔하게 */
+}
+
+.buy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 14px 0;
+  background-color: #1c7ed6; /* 네이버 쇼핑 시그니처 그린 */
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-radius: 8px;
+  text-decoration: none; /* a 태그 밑줄 제거 */
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px rgba(3, 46, 82, 0.3);
+}
+
+.buy-btn:hover {
+  background-color: #99cbf1;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(3, 46, 82, 0.3);
+}
+
+.buy-btn.disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+  .purchase-box {
+    width: 100%; /* 모바일에서는 꽉 차게 */
+    align-items: center;
+  }
+  
+  .buy-btn {
+    width: 100%;
+    max-width: 300px; /* 너무 넓어지지 않게 제한 */
   }
 }
 
