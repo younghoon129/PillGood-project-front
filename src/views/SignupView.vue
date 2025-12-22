@@ -171,42 +171,58 @@ onMounted(async () => {
         </div>
 
         <div class="field full toggle-section">
-  <div class="toggle-header" @click="isGenreOpen = !isGenreOpen">
-    <label class="section-label">
-      관심 있는 건강 분야 
-      <span class="sub-text">(복수 선택 가능)</span>
-    </label>
-    <span class="toggle-icon" :class="{ rotated: isGenreOpen }">▼</span>
-  </div>
-  
-  <div class="toggle-content" :class="{ open: isGenreOpen }">
-    <div class="category-grid">
-      <label v-for="cat in categories" :key="cat.id" class="cat-item">
-        <input type="checkbox" :value="cat.id" v-model="signupData.interested_genres" class="hidden-checkbox" />
-        <div class="cat-chip">{{ cat.name }}</div>
-      </label>
-    </div>
-  </div>
-</div>
+          <div class="toggle-header" @click="isGenreOpen = !isGenreOpen">
+            <label class="section-label">
+              관심 있는 건강 분야
+              <span class="sub-text">(복수 선택 가능)</span>
+            </label>
+            <span class="toggle-icon" :class="{ rotated: isGenreOpen }">▼</span>
+          </div>
+
+          <div class="toggle-content" :class="{ open: isGenreOpen }">
+            <div class="category-grid">
+              <label v-for="cat in categories" :key="cat.id" class="cat-item">
+                <input
+                  type="checkbox"
+                  :value="cat.id"
+                  v-model="signupData.interested_genres"
+                  class="hidden-checkbox"
+                />
+                <div class="cat-chip">{{ cat.name }}</div>
+              </label>
+            </div>
+          </div>
+        </div>
 
         <div class="field full toggle-section mt-3">
-  <div class="toggle-header" @click="isAllergyOpen = !isAllergyOpen">
-    <label class="section-label allergy-label">
-      보유 중인 알러지 
-      <span class="sub-text">(해당 성분 선택)</span>
-    </label>
-    <span class="toggle-icon" :class="{ rotated: isAllergyOpen }">▼</span>
-  </div>
+          <div class="toggle-header" @click="isAllergyOpen = !isAllergyOpen">
+            <label class="section-label allergy-label">
+              보유 중인 알러지
+              <span class="sub-text">(해당 성분 선택)</span>
+            </label>
+            <span class="toggle-icon" :class="{ rotated: isAllergyOpen }"
+              >▼</span
+            >
+          </div>
 
-  <div class="toggle-content" :class="{ open: isAllergyOpen }">
-    <div class="category-grid">
-      <label v-for="allergy in allergiesOptions" :key="allergy.id" class="cat-item">
-        <input type="checkbox" :value="allergy.id" v-model="signupData.allergies" class="hidden-checkbox" />
-        <div class="cat-chip allergy-chip">{{ allergy.name }}</div>
-      </label>
-    </div>
-  </div>
-</div>
+          <div class="toggle-content" :class="{ open: isAllergyOpen }">
+            <div class="category-grid">
+              <label
+                v-for="allergy in allergiesOptions"
+                :key="allergy.id"
+                class="cat-item"
+              >
+                <input
+                  type="checkbox"
+                  :value="allergy.id"
+                  v-model="signupData.allergies"
+                  class="hidden-checkbox"
+                />
+                <div class="cat-chip allergy-chip">{{ allergy.name }}</div>
+              </label>
+            </div>
+          </div>
+        </div>
 
         <button type="submit" class="signup-action-btn">가입 완료</button>
       </form>
@@ -486,8 +502,6 @@ onMounted(async () => {
     padding: 14px;
     font-size: 1rem;
   }
-
-  
 }
 
 /* 아주 작은 화면 (320px 이하) 대응 */
@@ -520,6 +534,4 @@ onMounted(async () => {
 .mt-3 {
   margin-top: 24px;
 }
-
-
 </style>

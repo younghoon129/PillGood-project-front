@@ -63,12 +63,14 @@ const handleSocialLogin = (platform) => {
           type="text"
           placeholder="아이디"
           class="login-input"
+          autocomplete="username"
         />
         <input
           v-model="password"
           type="password"
           placeholder="비밀번호"
           class="login-input"
+          autocomplete="current-password"
         />
         <button type="submit" class="login-submit-btn">로그인</button>
       </form>

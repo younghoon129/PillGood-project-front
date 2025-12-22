@@ -17,7 +17,7 @@
             <div class="summary-text">
               <div class="nickname-wrapper">
                 <h3>{{ profileData.nickname }}</h3>
-                <span :class="['provider-badge', profileData.provider]">
+                <span :class="['provider-badge', providerClass]">
                   {{ providerLabel }}
                 </span>
               </div>
@@ -251,13 +251,14 @@
               {{ showPwFields ? "비밀번호 변경 취소" : "비밀번호 변경하기" }}
             </button>
 
-            <div v-if="showPwFields" class="pw-inputs mt-3">
+            <form v-if="showPwFields" class="pw-inputs mt-3" @submit.prevent>
               <div class="input-group">
                 <label>현재 비밀번호</label>
                 <input
                   v-model="pwData.current_password"
                   type="password"
                   placeholder="현재 비밀번호 입력"
+                  autocomplete="current-password"
                 />
               </div>
               <div class="input-group">
@@ -266,6 +267,7 @@
                   v-model="pwData.new_password"
                   type="password"
                   placeholder="새 비밀번호 입력"
+                  autocomplete="new-password"
                 />
               </div>
               <div class="input-group">
@@ -274,9 +276,10 @@
                   v-model="pwData.confirm_password"
                   type="password"
                   placeholder="새 비밀번호 다시 입력"
+                  autocomplete="new-password"
                 />
               </div>
-            </div>
+            </form>
           </div>
 
           <div class="input-group full-width">
@@ -367,35 +370,32 @@ const pwData = ref({
 });
 
 const allCategoryOptions = ref([]);
-const allAllergyOptions = ref([]); // 🚩 알러지 전체 목록을 위한 ref
+const allAllergyOptions = ref([]);
 
 const myPills = ref([]);
 const myCustomPills = ref([]);
 
-const allIngredients = ref([]); // 서버에서 받은 전체 성분 리스트
-const ingredientSearch = ref(""); // 사용자 검색어
-const selectedIngredients = ref([]); // 현재 선택된 성분들(배열)
+const allIngredients = ref([]);
+const ingredientSearch = ref("");
+const selectedIngredients = ref([]);
 
-// 1. 성분 리스트 불러오기
 const fetchIngredients = async () => {
   const res = await axios.get("http://localhost:8000/pills/all-ingredients/");
   allIngredients.value = res.data;
 };
 
-// 2. 검색어에 따른 자동완성 필터링 (최대 10개 표시)
 const filteredIngredients = computed(() => {
   const query = ingredientSearch.value.trim();
   if (!query) return [];
   return allIngredients.value
     .filter((name) => name.includes(query))
-    .filter((name) => !selectedIngredients.value.includes(name)) // 이미 선택한 건 제외
+    .filter((name) => !selectedIngredients.value.includes(name))
     .slice(0, 10);
 });
 
-// 3. 성분 추가/삭제 함수
 const addIngredient = (name) => {
   selectedIngredients.value.push(name);
-  ingredientSearch.value = ""; // 입력창 비우기
+  ingredientSearch.value = "";
 };
 const removeIngredient = (idx) => selectedIngredients.value.splice(idx, 1);
 
@@ -412,20 +412,18 @@ const fetchCustomPills = async () => {
 };
 
 const allPills = computed(() => {
-  // 1. 일반 영양제 데이터 가공
   const dbList = myPills.value.map((item) => ({
-    id: item.id, // UserPill 모델의 PK (삭제 시 필요할 수 있음)
-    pill_id: item.pill?.id, // 🚩 실제 영양제 상세페이지로 갈 때 쓰는 ID
+    id: item.id,
+    pill_id: item.pill?.id,
     name: item.pill?.PRDLST_NM || "이름 정보 없음",
     img: item.pill?.cover || defaultImg,
     type: "db",
     created_at: item.created_at,
   }));
 
-  // 2. 커스텀 영양제 데이터 가공
   const customList = myCustomPills.value.map((item) => ({
     id: item.id,
-    pill_id: null, // 커스텀은 상세페이지가 없음
+    pill_id: null,
     name: item.name,
     img: defaultImg,
     type: "custom",
@@ -442,45 +440,35 @@ const newCustomPill = ref({ name: "", brand: "", memo: "" });
 
 const refreshAllPills = async () => {
   try {
-    // 두 API 호출을 동시에 실행하고 모두 완료될 때까지 기다립니다.
     await Promise.all([fetchMyPills(), fetchCustomPills()]);
-    console.log("모든 영양제 리스트가 갱신되었습니다. ✨");
   } catch (err) {
     console.error("리스트 갱신 중 오류 발생:", err);
   }
 };
 
 const handleCustomRegister = async () => {
-  // 1. 유효성 검사 (가장 먼저 수행)
   if (!newCustomPill.value.name) {
     alert("영양제 이름을 입력해주세요! 💊");
     return;
   }
 
   try {
-    // 2. 데이터 가공 (선택된 성분 배열을 쉼표 문자열로 변환)
     const payload = {
       ...newCustomPill.value,
       ingredients: selectedIngredients.value.join(", "),
     };
 
-    // 3. 서버 전송
     await axios.post(
       "http://localhost:8000/pills/custom-pills/",
       payload,
       config
     );
 
-    // 4. 성공 처리
     alert("나의 영양제함에 등록되었습니다! ✨");
     showModal.value = false;
-
-    // 5. 데이터 초기화 (입력창 + 선택된 성분 태그들)
     newCustomPill.value = { name: "", brand: "", memo: "" };
-    selectedIngredients.value = []; // 🚩 성분 태그 초기화 추가
+    selectedIngredients.value = [];
     ingredientSearch.value = "";
-
-    // 6. 리스트 최신화
     await refreshAllPills();
   } catch (err) {
     console.error("등록 실패:", err);
@@ -498,9 +486,7 @@ const removePill = async (item) => {
         : `http://localhost:8000/pills/${item.pill_id}/toggle/`;
 
     await axios.delete(url, config);
-
     await refreshAllPills();
-
     alert("영양제함에서 삭제되었습니다.");
   } catch (err) {
     console.error("삭제 실패:", err);
@@ -514,15 +500,13 @@ const fetchMyPills = async () => {
       "http://localhost:8000/pills/my-pills/",
       config
     );
-    myPills.value = response.data; // 서버에서 받아온 리스트 저장
+    myPills.value = response.data;
   } catch (err) {
     console.error(err);
   }
 };
 
 const goToDetail = (pillId) => {
-  // 영양제 상세 페이지의 라우터 경로가 '/pills/:pill_pk'라고 가정합니다.
-  // name을 사용하신다면 router.push({ name: 'PillDetail', params: { pill_pk: pillId } })
   router.push(`/pills/${pillId}`);
 };
 
@@ -530,14 +514,31 @@ const config = {
   headers: { Authorization: `Token ${authStore.token}` },
 };
 
+// 🚩 수정: 구글 로그인을 정확히 판단하기 위해 username 접두어 체크 로직 통합
 const providerLabel = computed(() => {
-  const providers = {
-    kakao: "카카오 로그인",
-    naver: "네이버 로그인",
-    google: "구글 로그인",
-    local: "자체 회원",
-  };
-  return providers[profileData.value?.provider] || "일반 회원";
+  const provider = profileData.value?.provider;
+  const username = profileData.value?.username || "";
+
+  if (provider === "kakao" || username.startsWith("kakao_"))
+    return "카카오 로그인";
+  if (provider === "naver" || username.startsWith("naver_"))
+    return "네이버 로그인";
+  if (provider === "google" || username.startsWith("google_"))
+    return "구글 로그인";
+
+  return "자체 회원";
+});
+
+// 🚩 추가: 뱃지 색상 클래스를 위한 computed
+const providerClass = computed(() => {
+  const provider = profileData.value?.provider;
+  const username = profileData.value?.username || "";
+
+  if (provider === "kakao" || username.startsWith("kakao_")) return "kakao";
+  if (provider === "naver" || username.startsWith("naver_")) return "naver";
+  if (provider === "google" || username.startsWith("google_")) return "google";
+
+  return "local";
 });
 
 const loginType = computed(() => {
@@ -546,8 +547,7 @@ const loginType = computed(() => {
   if (profileData.value?.username?.startsWith("google_")) return "구글 로그인";
   return "일반 로그인";
 });
-console.log(providerLabel);
-// 1. 전체 카테고리 로드
+
 const fetchAllCategories = async () => {
   try {
     const response = await axios.get("http://localhost:8000/pills/categories/");
@@ -557,7 +557,6 @@ const fetchAllCategories = async () => {
   }
 };
 
-// 🚩 2. 전체 알러지 목록 로드 (새로 만든 API 호출)
 const fetchAllAllergies = async () => {
   try {
     const response = await axios.get(
@@ -569,7 +568,6 @@ const fetchAllAllergies = async () => {
   }
 };
 
-// 3. 프로필 정보 로드
 const fetchProfile = async () => {
   try {
     const response = await axios.get(
@@ -602,7 +600,6 @@ const enterEditMode = () => {
       : [],
   };
 
-  // 🚩 비밀번호 필드 초기화
   showPwFields.value = false;
   pwData.value = {
     current_password: "",
@@ -611,16 +608,11 @@ const enterEditMode = () => {
   };
 
   isEditMode.value = true;
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth",
-  });
+  window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
 const updateProfile = async () => {
   try {
-    // 1. 비밀번호 변경 시도 (비밀번호 변경이 활성화된 경우)
     if (showPwFields.value) {
       if (!pwData.value.current_password || !pwData.value.new_password) {
         alert("비밀번호 필드를 모두 입력해주세요.");
@@ -641,7 +633,6 @@ const updateProfile = async () => {
       );
     }
 
-    // 2. 기존 프로필 정보 수정 (닉네임, 나이 등)
     const response = await axios.put(
       "http://localhost:8000/accounts/profile/",
       editedData.value,
@@ -656,7 +647,6 @@ const updateProfile = async () => {
     alert("정보가 성공적으로 수정되었습니다! ✨");
     fetchProfile();
   } catch (err) {
-    // 백엔드에서 보낸 에러 메시지가 있으면 출력
     const errorMsg = err.response?.data?.error || "수정에 실패했습니다.";
     alert(errorMsg);
   }
@@ -668,8 +658,6 @@ const moveToDeletePage = () => {
 </script>
 
 <style scoped>
-/* --- 기존 CSS 유지 및 알러지 스타일 추가 --- */
-
 /* [1] 공통 레이아웃 및 카드 */
 .mypage-wrapper {
   padding: 60px 20px;
@@ -752,6 +740,12 @@ const moveToDeletePage = () => {
 .provider-badge.naver {
   background-color: #03c75a;
   color: #ffffff;
+}
+/* 🚩 추가: 구글 뱃지 전용 스타일 */
+.provider-badge.google {
+  background-color: #ffffff;
+  color: #757575;
+  border: 1px solid #e2e8f0;
 }
 
 /* [3] 그리드 레이아웃 */
@@ -927,7 +921,7 @@ const moveToDeletePage = () => {
   border-color: #f43f5e;
 }
 
-/* [7] 메인 버튼들 (수정, 저장, 취소) */
+/* [7] 메인 버튼들 */
 .main-btn {
   width: 100%;
   padding: 16px;
@@ -961,7 +955,7 @@ const moveToDeletePage = () => {
   margin-top: 20px;
 }
 
-/* [8] 모달 스타일 및 모달 버튼 (🚩 복구 완료) */
+/* [8] 모달 스타일 */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1013,8 +1007,6 @@ const moveToDeletePage = () => {
   display: flex;
   gap: 12px;
 }
-
-/* 🚩 모달 내 취소/등록 버튼 스타일 */
 .btn-cancel {
   flex: 1;
   padding: 14px;
@@ -1171,15 +1163,12 @@ const moveToDeletePage = () => {
   .button-group,
   .modal-footer {
     flex-direction: column;
-  } /* 모바일에서 버튼 세로로 */
+  }
 }
 
 /* 유틸리티 */
 .mt-3 {
   margin-top: 15px !important;
-}
-.mt-4 {
-  margin-top: 20px !important;
 }
 .required {
   color: #ef4444;
