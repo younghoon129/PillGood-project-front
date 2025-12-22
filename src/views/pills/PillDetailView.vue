@@ -789,7 +789,7 @@ onMounted(async () => {
 /* 중복 섭취 스타일 */
 .duplicate-warning-banner {
   background-color: #fffbeb; /* Amber 50 */
-  border: 1px solid #fef3c7; /* Amber 200 */
+  border: 1px solid #dfd3a4; /* Amber 200 */
   border-radius: 20px;
   padding: 24px;
   margin-bottom: 20px;
