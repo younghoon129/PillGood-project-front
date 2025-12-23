@@ -6,6 +6,17 @@ import ChatBotView from './ChatBotView.vue'
 const router = useRouter()
 
 const showChatModal = ref(false)
+const showAboutModal = ref(false)
+
+// 스크롤 잠금
+watch(showChatModal, (newValue) => {
+  document.body.style.overflow = newValue ? 'hidden' : ''
+})
+watch(showAboutModal, (newValue) => {
+  document.body.style.overflow = newValue ? 'hidden' : ''
+})
+
+
 
 watch(showChatModal, (newValue) => {
   if (newValue) {
@@ -30,6 +41,10 @@ const goChatBot = () => {
   showChatModal.value = true
 }
 
+const openAbout = () => showAboutModal.value = true
+const closeAboutModal = () => showAboutModal.value = false
+
+
 // 준비 중 알림 함수
 const alertNotReady = () => {
   alert("준비 중인 기능입니다! 조금만 기다려주세요 🛠️")
@@ -38,7 +53,7 @@ const alertNotReady = () => {
 
 <template>
   <div class="home-wrapper">
-    <div class="main-container" :class="{ 'is-blurred': showChatModal }">
+    <div class="main-container" :class="{ 'is-blurred': showChatModal, 'is-blurred': showAboutModal }">
       <section class="hero">
         <div class="content">
           <h1 class="title">
@@ -49,8 +64,8 @@ const alertNotReady = () => {
             수천 개의 영양제 성분과 알레르기 정보를 분석하여<br />
             당신에게 가장 안전하고 효과적인 선택을 도와드립니다.
           </p>
-          <button @click="goPillList" class="cta-button">
-            영양제 찾아보기 →
+          <button @click="openAbout" class="cta-button">
+            PillGood을 소개합니다 →
           </button>
         </div>
         
@@ -60,9 +75,9 @@ const alertNotReady = () => {
       </section>
 
       <section class="features">
-        <div class="feature-item" @click="alertNotReady">
-          <h3>🔍 성분 분석</h3>
-          <p>복잡한 성분표를<br>쉽게 확인하세요</p>
+        <div class="feature-item" @click="goPillList">
+          <h3>🔍 영양제 찾아보기</h3>
+          <p>다양한 영양제<br>쉽게 확인해보세요</p>
         </div>
 
         <div class="feature-item" @click="goChatBot">
@@ -84,11 +99,78 @@ const alertNotReady = () => {
         </div>
       </div>
     </Transition>
+    <Transition name="modal-fade">
+      <div v-if="showAboutModal" class="modal-overlay" @click.self="closeAboutModal">
+        <div class="modal-window about-window">
+          <button class="close-btn" @click="closeAboutModal">×</button>
+          
+          <div class="about-content">
+            <div class="about-header">
+              <h2>PillGood을 소개합니다</h2>
+              <p>내 몸에 꼭 맞는 스마트한 영양 관리</p>
+            </div>
+
+            <div class="about-body">
+              <p class="vision-text">
+                <span class="highlight-brand">PillGood</span>은 
+                <strong>'기분 좋다(Feel Good)'</strong>라는 의미처럼, 
+                영양제 선택의 스트레스를 덜고 소비자의 건강한 삶을 응원합니다. <br class="pc-br">
+                우리는 <strong>식품의약품안전처</strong> 기반의 데이터를 통해 
+                복잡한 성분표를 투명하게 분석하며, 누구나 쉽고 안전하게 자신에게 맞는 영양제를 찾을 수 있는 
+                행복한 헬스케어 경험을 만들어 가겠습니다.
+              </p>
+              <ul class="feature-list">
+                <li>✨ 4,000여 종의 영양제 데이터베이스 구축</li>
+                <li>🔍 개인별 맞춤 영양 성분 분석</li>
+                <li>🚫 알레르기 유발 성분 자동 필터링</li>
+                <li>📅 구글 캘린더에 섭취 일정 등록 & 알림 기능</li>
+                <li>💬 100% 내돈내산 사용자 후기 공유</li>
+                <li>🤖 개인별 최적화된 AI 맞춤 케어</li>
+              </ul>
+              <p class="highlight-text">우리는 데이터로 더 정직한 건강 세상을 만듭니다.</p>
+            </div>
+
+            <button @click="closeAboutModal" class="confirm-btn">확인</button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <style scoped>
 /* ... 기존 스타일 유지 ... */
+
+.vision-text {
+    font-size: 16px;            /* 글자 크기 적당히 */
+    line-height: 1.8;           /* 줄 간격을 넓혀 읽기 편하게 */
+    color: #4B5563;             /* 촌스러운 검정 대신 진한 회색 */
+    margin: 0;                  /* 기본 여백 제거 (필요시 조정) */
+    word-break: keep-all;       /* 단어 중간에 줄바꿈 방지 */
+  }
+
+  /* 1. PillGood 브랜드명 강조 (색상 + 굵기) */
+  .highlight-brand {
+    color: #1c7ed6;             /* 신뢰감을 주는 에메랄드 그린 */
+    font-weight: 800;           /* 가장 두껍게 */
+    font-size: 1.1em;           /* 살짝 키움 */
+  }
+
+  /* 2. 'Feel Good' 의미 강조 (배경 형광펜 효과) */
+  .highlight-meaning {
+    background: linear-gradient(to top, #D1FAE5 40%, transparent 40%); /* 아래쪽만 연한 형광펜 칠한 느낌 */
+    font-weight: 700;
+  }
+
+  /* 3. 식약처 강조 (밑줄 효과) */
+  .highlight-trust {
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: #10B981; /* 초록색 밑줄 */
+    text-decoration-thickness: 2px; /* 밑줄 두께 */
+    text-underline-offset: 4px;     /* 글자와 밑줄 사이 간격 */
+    color: #1F2937;             /* 진한 검정 */
+  }
 
 .main-container {
   max-width: 1200px;
@@ -267,6 +349,95 @@ const alertNotReady = () => {
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
   display: flex;
+}
+.chat-window {
+  width: 100%;
+  max-width: 600px;
+  height: 80vh;
+}
+
+/* [수정 6] 기업 소개 모달 스타일 추가 */
+.about-window {
+  width: 90%;
+  max-width: 500px;
+  height: auto; /* 내용에 맞게 높이 조절 */
+  flex-direction: column;
+  position: relative;
+  padding: 0;
+}
+
+.about-content {
+  padding: 40px 30px;
+}
+
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #868e96;
+}
+
+.about-header h2 {
+  color: #1c7ed6;
+  margin-bottom: 8px;
+  font-size: 1.8rem;
+}
+
+.about-header p {
+  color: #868e96;
+  font-size: 0.95rem;
+}
+
+.about-body {
+  margin: 30px 0;
+  line-height: 1.7;
+  color: #495057;
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.feature-list li {
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.feature-list li:last-child {
+  margin-bottom: 0;
+}
+
+.highlight-text {
+  font-weight: bold;
+  color: #1c7ed6;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.confirm-btn {
+  width: 100%;
+  padding: 15px;
+  background-color: #1c7ed6;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.confirm-btn:hover {
+  background-color: #1864ab;
 }
 
 /* 모달 애니메이션 */
