@@ -79,6 +79,12 @@ const handleSocialLogin = (platform) => {
         <span>계정이 없으신가요?</span>
         <RouterLink :to="{ name: 'Signup' }">회원가입 하기</RouterLink>
       </div>
+      <div class="login-links">
+        <span>계정을 잊으셨나요?</span>
+        <RouterLink :to="{ name: 'FindAccount' }"
+          >아이디 / 비밀번호 찾기</RouterLink
+        >
+      </div>
 
       <div class="divider-container">
         <hr class="divider-line" />

@@ -20,6 +20,7 @@ import GoogleCallbackView from "@/views/GoogleCallbackView.vue";
 import ThreadUpdateView from "@/views/pills/ThreadUpdateView.vue";
 import UserDeleteView from "@/views/UserDeleteView.vue";
 import ChatBotView from "@/views/ChatBotView.vue";
+import FindAccountView from "@/views/FindAccountView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -50,16 +51,21 @@ const router = createRouter({
       component: SignupView,
     },
     {
+      path: "/find-account",
+      name: "FindAccount",
+      component: FindAccountView,
+    },
+    {
       path: "/profile",
       name: "MyPage",
       component: MyPageView,
       meta: { requiresAuth: true },
     },
     {
-      path: '/chatbot',
-      name: 'chatbot',
-      component : ChatBotView,
-      meta: {requiresAuth:true}
+      path: "/chatbot",
+      name: "chatbot",
+      component: ChatBotView,
+      meta: { requiresAuth: true },
     },
     // {
     //   path: '/profile/:username',
