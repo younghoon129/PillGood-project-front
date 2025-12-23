@@ -30,20 +30,7 @@ const goToMore = () => {
   <div class="container" v-if="substance.name">
     <h1 class="page-title">{{ substance.name }}</h1>
     
-    <div class="info-section">
-      <div class="info-box">
-        <h3>✨ 효능 및 효과</h3>
-        <p>{{ substance.efficacy }}</p>
-      </div>
-      <div class="info-box">
-        <h3>🍴 권장 섭취량</h3>
-        <p>{{ substance.recommended_intake }}</p>
-      </div>
-      <div class="info-box warning">
-        <h3>⚠️ 부작용 및 주의사항</h3>
-        <p>{{ substance.side_effects }}</p>
-      </div>
-    </div>
+
 
     <div class="product-section">
       <div class="section-header">
