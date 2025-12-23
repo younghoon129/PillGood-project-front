@@ -11,6 +11,10 @@ const props = defineProps({
   pill: Object
 })
 
+const handleImageError = (e) => {
+  e.target.src = defaultImg
+}
+
 // 클릭 시 상세 페이지로 이동 (ID 기반)
 const goDetail = () => {
   router.push({ 
@@ -23,7 +27,7 @@ const goDetail = () => {
 <template>
   <div class="card" @click="goDetail">
     <div class="image-wrapper">
-      <img :src="pill.cover || defaultImg" :alt="pill.PRDLST_NM" class="card-img">
+      <img :src="pill.cover || defaultImg" @error="handleImageError" :alt="pill.PRDLST_NM" class="card-img">
     </div>
     <div class="card-body">
       <p class="company-name">{{ pill.BSSH_NM }}</p>
@@ -64,7 +68,7 @@ const goDetail = () => {
 .card-img {
   width: 100%;
   height: 100%;
-  /* object-fit: cover;  */
+  /* object-fit: cover; , contain;(비율 유지, 여백생김)  */
   /* 이미지 비율 유지하며 안에 맞춤 (cover로 하면 꽉 채움) */
 }
 

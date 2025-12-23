@@ -177,7 +177,10 @@ const toggleReviews = async () => {
 
 onMounted(async () => {
   const pillId = route.params.pill_pk;
-  store.getPillDetail(pillId);
+  store.clearPillDetail();
+
+  await store.getPillDetail(route.params.pill_pk);
+  
 
   // 페이지 로드 시 , 영양제가 사용자 영양제함에 있는지 확인
   checkEnrollmentStatus();
@@ -198,6 +201,7 @@ onMounted(async () => {
       console.error("유저 정보를 불러오지 못했습니다.", err);
     }
   }
+  
 });
 </script>
 
