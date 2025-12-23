@@ -59,6 +59,8 @@ const goToMore = () => {
 </template>
 
 <style scoped>
+
+
 .container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
 .page-title { text-align: center; margin-bottom: 40px; font-weight: 800; font-size: 2.5rem; }
 .info-section { display: flex; flex-direction: column; gap: 20px; margin-bottom: 60px; }

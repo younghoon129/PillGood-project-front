@@ -377,5 +377,14 @@ const pageNumbers = computed(() => {
   .page-title {
     font-size: 1.8rem;
   }
+  .pill-list {
+    grid-template-columns: repeat(2, 1fr); /* 무조건 2열로 고정 */
+    gap: 12px;
+    align-items: start;
+  }
+
+  .pill-list > * {
+    margin-bottom: 0; 
+  }
 }
 </style>

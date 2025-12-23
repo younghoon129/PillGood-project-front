@@ -93,6 +93,7 @@ onMounted(async () => {
             v-model="signupData.username"
             type="text"
             placeholder="사용할 아이디 입력"
+            autocomplete="ture"
           />
         </div>
         <div class="field full">
@@ -102,6 +103,7 @@ onMounted(async () => {
             id="email"
             v-model="signupData.email"
             placeholder="example@pillgood.com"
+            autocomplete="ture"
             required
           />
         </div>
@@ -112,6 +114,7 @@ onMounted(async () => {
             v-model="signupData.password"
             type="password"
             placeholder="비밀번호를 입력하세요"
+            autocomplete="ture"
             required
           />
         </div>
@@ -122,6 +125,7 @@ onMounted(async () => {
             v-model="signupData.passwordConfirm"
             type="password"
             placeholder="비밀번호를 한 번 더 입력하세요"
+            autocomplete="ture"
             required
           />
 
