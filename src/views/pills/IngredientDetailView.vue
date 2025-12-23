@@ -29,25 +29,10 @@ const goToMore = () => {
 <template>
   <div class="container" v-if="substance.name">
     <h1 class="page-title">{{ substance.name }}</h1>
-    
-    <div class="info-section">
-      <div class="info-box">
-        <h3>✨ 효능 및 효과</h3>
-        <p>{{ substance.efficacy }}</p>
-      </div>
-      <div class="info-box">
-        <h3>🍴 권장 섭취량</h3>
-        <p>{{ substance.recommended_intake }}</p>
-      </div>
-      <div class="info-box warning">
-        <h3>⚠️ 부작용 및 주의사항</h3>
-        <p>{{ substance.side_effects }}</p>
-      </div>
-    </div>
 
     <div class="product-section">
       <div class="section-header">
-        <h2>이 성분이 포함된 영양제</h2>
+        <h2><span class="blue-underline">{{ substance.name }}</span> 성분이 포함된 영양제 추천</h2>
         <button @click="goToMore" class="more-btn">더보기 ></button>
       </div>
       
@@ -60,7 +45,9 @@ const goToMore = () => {
 
 <style scoped>
 
-
+.blue-underline {
+  background: linear-gradient(to top, #A5D8FF 40%, transparent 40%);
+}
 .container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
 .page-title { text-align: center; margin-bottom: 40px; font-weight: 800; font-size: 2.5rem; }
 .info-section { display: flex; flex-direction: column; gap: 20px; margin-bottom: 60px; }
