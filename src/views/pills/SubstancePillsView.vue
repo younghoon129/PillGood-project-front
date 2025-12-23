@@ -1,28 +1,41 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
 import axios from 'axios'
 import PillCard from '@/components/pills/PillCard.vue'
 
 const route = useRoute()
+const router = useRouter()
 const subId = route.params.substanceId
 
 // 상태 변수
 const pills = ref([])
 const totalCount = ref(0)
-const currentPage = ref(1)
+const currentPage = ref(Number(route.query.page) || 1)
 const substanceName = ref('')
 
 // 필터 상태
-const selectedCategory = ref([]) 
+const selectedCategory = ref(route.query.category ? route.query.category.split(',') : [])
+const selectedShapes = ref(route.query.shapes ? route.query.shapes.split(',') : [])
 const categoryOptions = ref([]) 
 const shapeOptions = ['정', '캡슐', '액상', '분말', '과립', '환', '젤리', '바', '기타']
-const selectedShapes = ref([])
 
 // 데이터 가져오기
-const fetchPills = (page = 1) => {
+const fetchPills = (page = 1, saveHistory = true) => {
   currentPage.value = page
   
+  // 4-1. URL 변경 로직 추가 (버튼 클릭 시에만 기록 저장)
+  if (saveHistory) {
+    router.push({
+      query: {
+        page: page,
+        category: selectedCategory.value.length > 0 ? selectedCategory.value.join(',') : undefined, 
+        shapes: selectedShapes.value.length > 0 ? selectedShapes.value.join(',') : undefined
+      }
+    })
+  }
+
+  // 4-2. 데이터 요청 (기존 로직 동일)
   axios.get(`http://127.0.0.1:8000/pills/substances/${subId}/pills/`, {
     params: {
       page: page,
@@ -33,19 +46,37 @@ const fetchPills = (page = 1) => {
   .then(res => {
     pills.value = res.data.results
     totalCount.value = res.data.count
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    
+    // 4-3. 스크롤 로직: 클릭이면 부드럽게, 뒤로가기면 즉시 이동
+    // const scrollBehavior = saveHistory ? 'smooth' : 'auto'
+    // window.scrollTo({ top: 0, behavior: scrollBehavior })
   })
 }
 
 // 초기 데이터 로드
 onMounted(async () => {
+  // 브라우저 스크롤 자동 복원 방지 (뒤로가기 시 맨 위로 가기 위해)
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
+
   const subRes = await axios.get(`http://127.0.0.1:8000/pills/substances/${subId}/`)
   substanceName.value = subRes.data.name
   
   const catRes = await axios.get('http://127.0.0.1:8000/pills/categories/')
   categoryOptions.value = catRes.data
   
-  fetchPills(1)
+  // [수정] 5. 초기 로딩 시에는 히스토리를 쌓지 않음 (false)
+  fetchPills(currentPage.value, false)
+})
+
+onBeforeRouteUpdate((to, from) => {
+  // 뒤로가기 누르면 URL이 먼저 바뀌고 이 함수가 실행됨
+  // 바뀐 URL의 정보를 변수에 넣고 fetchPills 호출
+  currentPage.value = Number(to.query.page) || 1
+  selectedCategory.value = to.query.category ? to.query.category.split(',') : []
+  selectedShapes.value = to.query.shapes ? to.query.shapes.split(',') : []
+
+  // 이미 URL이 바뀐 상태이므로 히스토리 저장은 안 함(false)
+  fetchPills(currentPage.value, false)
 })
 
 // 페이지네이션 로직

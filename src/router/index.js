@@ -58,8 +58,8 @@ const router = createRouter({
     {
       path: '/chatbot',
       name: 'chatbot',
-      component : ChatBotView,
-      meta: {requiresAuth:true}
+      component: ChatBotView,
+      meta: { requiresAuth: true }
     },
     // {
     //   path: '/profile/:username',
@@ -156,6 +156,7 @@ const router = createRouter({
     }
     return { top: 0 };
   },
+
 });
 
 router.beforeEach((to, from, next) => {

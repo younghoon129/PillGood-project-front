@@ -1,6 +1,6 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
+import { useRouter, useRoute, onBeforeRouteUpdate } from 'vue-router'
 import { usePillStore } from '@/stores/pills'
 import PillCard from '@/components/pills/PillCard.vue'
 
@@ -24,33 +24,34 @@ const initialShapes = route.query.shapes ? route.query.shapes.split(',') : []
 const selectedShapes = ref(initialShapes)
 
 
-const fetchPills = (page) => {
+const fetchPills = (page, addToHistory = true, scrollTop = true) => {
   currentPage.value = page 
-  
-  // 검색 조건 객체 생성
-  const queryParams = {
-    page: page,
-    search_type: searchType.value,
-    keyword: keyword.value,
-    shapes: selectedShapes.value.length > 0 ? selectedShapes.value.join(',') : undefined // 비어있으면 URL에서 제거
+
+  if (addToHistory) {
+    router.push({
+      query: {
+        page,
+        search_type: searchType.value,
+        keyword: keyword.value,
+        shapes: selectedShapes.value.length
+          ? selectedShapes.value.join(',')
+          : undefined
+      }
+    })
   }
 
-  // API 요청 파라미터 (store용)
-  const apiParams = {
+  store.getPills(page, {
     search_type: searchType.value,
     keyword: keyword.value,
-    shapes: selectedShapes.value.join(',') 
+    shapes: selectedShapes.value.join(',')
+  })
+
+  // ✅ 버튼 클릭 / 검색일 때만
+  if (scrollTop && !isFirstLoad.value) {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
-
-  // [핵심] 상태가 변경될 때마다 URL을 업데이트 (history에 쌓임)
-  // router.push를 사용하면 뒤로가기 시 이전 상태(URL)로 돌아갈 수 있음
-  router.push({ query: queryParams })
-
-  // 데이터 가져오기
-  store.getPills(page, apiParams)
-  
-  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
+
 
 const searchPills = () => fetchPills(1)
 const resetSearch = () => {
@@ -69,7 +70,7 @@ const pageNumbers = computed(() => {
   for (let i = start; i <= end; i++) pages.push(i)
   return pages
 })
-
+const isFirstLoad = ref(true)
 const hasPrevGroup = computed(() => currentGroup.value > 0)
 const hasNextGroup = computed(() => (currentGroup.value + 1) * 9 < totalPages.value)
 
@@ -84,7 +85,19 @@ const moveToPrevGroup = () => {
 }
 
 onMounted(() => {
-  fetchPills(currentPage.value)
+  // ❌ 여기서는 스크롤 절대 X
+  fetchPills(currentPage.value, false, false)
+  isFirstLoad.value = false
+})
+
+onBeforeRouteUpdate((to) => {
+  currentPage.value = Number(to.query.page) || 1
+  searchType.value = to.query.search_type || ''
+  keyword.value = to.query.keyword || ''
+  selectedShapes.value = to.query.shapes ? to.query.shapes.split(',') : []
+
+  // ❌ 스크롤 절대 금지
+  fetchPills(currentPage.value, false, false)
 })
 </script>
 
