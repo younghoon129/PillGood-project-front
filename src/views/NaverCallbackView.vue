@@ -14,15 +14,18 @@ onMounted(async () => {
 
   if (code) {
     try {
-      const response = await axios.post(
-        "/accounts/naver/login/",
-        {
-          code,
-          state,
-        }
-      );
+      const response = await axios.post("/accounts/naver/login/", {
+        code,
+        state,
+      });
       authStore.saveToken(response.data);
-      router.push({ name: "Home" });
+
+      if (response.data.is_new_user) {
+        // 🚩 신규 유저라면 마이페이지로 이동
+        router.push({ name: "MyPage" });
+      } else {
+        router.push({ name: "Home" });
+      }
     } catch (err) {
       alert("네이버 로그인 실패");
       router.push({ name: "Login" });

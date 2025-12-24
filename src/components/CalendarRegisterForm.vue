@@ -118,7 +118,9 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import axios from "@/api/http";
+import { useAuthStore } from "@/stores/auth"; // authStore 가져오기
 
+const authStore = useAuthStore();
 const pillName = ref("");
 const selectedDate = ref("");
 const intakeTime = ref("09:00");
@@ -129,14 +131,16 @@ const isSuccess = ref(false);
 
 const today = computed(() => new Date().toISOString().split("T")[0]);
 
-// 1. 페이지 로드 시 DB 연동 상태 확인
+// ✅ 1. 페이지 로드 시 백엔드 DB를 조회하여 연동 상태를 확인합니다.
 onMounted(async () => {
   const token = localStorage.getItem("token");
   if (token) {
     try {
+      // 백엔드 API 호출: 현재 유저의 GoogleSocialAccount.is_linked 값을 가져옴
       const response = await axios.get("/accounts/check-google-link/", {
         headers: { Authorization: `Token ${token}` }
       });
+      // DB 정보를 바탕으로 화면 전환 (연동 완료면 폼 노출, 아니면 버튼 노출)
       hasGoogleToken.value = response.data.is_linked;
     } catch (err) {
       console.error("연동 상태 확인 실패:", err);
@@ -145,78 +149,54 @@ onMounted(async () => {
   }
 });
 
-// ✅ 2. 구글 계정 연동하기 함수 (이 부분이 빠져있었습니다!)
+// 2. 구글 계정 연동하기 (구글 로그인 창으로 이동)
 const connectGoogle = () => {
   const CLIENT_ID = "34177585488-sbk57388v5hfnjprm894sfl5ektmjpn9.apps.googleusercontent.com";
-  
-  // .env 파일의 VITE_GOOGLE_REDIRECT_URI 값을 사용합니다.
   const REDIRECT_URI = import.meta.env.VITE_GOOGLE_REDIRECT_URI; 
-  
   const scope = encodeURIComponent(
     "https://www.googleapis.com/auth/calendar.events openid email profile"
   );
-  
-  // 구글 로그인 페이지로 리다이렉트
   window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`;
 };
 
-// 3. 연동 해제 함수
+// 3. 연동 해제
 const disconnectGoogle = async () => {
   if (confirm("연동을 해제하시겠습니까?")) {
     try {
       const token = localStorage.getItem("token");
-      
-      // 🚩 백엔드 DB 상태를 변경합니다.
       await axios.post("/accounts/google/unlink/", {}, {
         headers: { Authorization: `Token ${token}` }
       });
-
-      // UI 상태 반영
       hasGoogleToken.value = false;
       localStorage.removeItem("google_access_token");
-      
       alert("✅ 구글 연동이 해제되었습니다.");
     } catch (err) {
-      console.error("해제 실패:", err);
       alert("연동 해제 중 오류가 발생했습니다.");
     }
   }
 };
 
-// 4. 구글 캘린더 일정 등록 함수
+// 4. 구글 캘린더 일정 등록
 const registerToGoogle = async () => {
   if (!pillName.value || !selectedDate.value) return alert("항목을 입력해주세요.");
   isLoading.value = true;
-  
   try {
     const djangoToken = localStorage.getItem("token");
-    await axios.post(
-      "/pills/google-calendar/",
+    await axios.post("/pills/google-calendar/",
       {
         pillName: pillName.value,
         date: selectedDate.value,
         time: intakeTime.value,
         description: description.value,
       },
-      {
-        headers: {
-          Authorization: `Token ${djangoToken}`,
-        },
-      }
+      { headers: { Authorization: `Token ${djangoToken}` } }
     );
-
     pillName.value = "";
     description.value = "";
     isSuccess.value = true;
     setTimeout(() => { isSuccess.value = false; }, 2500);
-
   } catch (err) {
-    if (err.response && err.response.status === 401) {
-      alert("인증이 만료되었습니다. 다시 연동해주세요.");
-      hasGoogleToken.value = false;
-    } else {
-      alert("등록 실패: 연동 상태를 확인해주세요.");
-    }
+    alert("등록 실패: 연동 상태를 확인해주세요.");
   } finally {
     isLoading.value = false;
   }

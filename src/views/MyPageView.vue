@@ -1,4 +1,69 @@
 <template>
+
+  <Transition name="modal">
+  <div v-if="showWelcomeModal" class="modal-overlay welcome-overlay">
+    <div class="modal-card welcome-card compact"> <div class="modal-header">
+        <h4>🎁 환영합니다!</h4>
+      </div>
+      
+      <div class="modal-body scrollable"> <p class="welcome-desc">필수 정보를 입력하고 맞춤 추천을 받아보세요.</p>
+        
+        <div class="input-row-group">
+          <div class="input-group">
+            <label>성별</label>
+            <select v-model="editedData.gender">
+              <option value="M">남성</option>
+              <option value="F">여성</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>나이</label>
+            <input v-model.number="editedData.age" type="number" placeholder="나이" />
+          </div>
+        </div>
+
+        <div class="toggle-section mt-3">
+          <div class="toggle-header" @click="isGenreOpen = !isGenreOpen">
+            <label class="section-label">
+              관심 건강 분야 <span class="sub-text">(선택)</span>
+            </label>
+            <span class="toggle-icon" :class="{ rotated: isGenreOpen }">▼</span>
+          </div>
+          <div class="toggle-content" :class="{ open: isGenreOpen }">
+            <div class="category-grid">
+              <label v-for="cat in allCategoryOptions" :key="cat.id" class="cat-item">
+                <input type="checkbox" :value="cat.id" v-model="editedData.interested_genres" class="hidden-checkbox" />
+                <div class="cat-chip">{{ cat.name }}</div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="toggle-section mt-2">
+          <div class="toggle-header" @click="isAllergyOpen = !isAllergyOpen">
+            <label class="section-label allergy-label">
+              보유 중인 알러지 <span class="sub-text">(선택)</span>
+            </label>
+            <span class="toggle-icon" :class="{ rotated: isAllergyOpen }">▼</span>
+          </div>
+          <div class="toggle-content" :class="{ open: isAllergyOpen }">
+            <div class="category-grid">
+              <label v-for="allergy in allAllergyOptions" :key="allergy.id" class="cat-item">
+                <input type="checkbox" :value="allergy.id" v-model="editedData.allergies" class="hidden-checkbox" />
+                <div class="cat-chip allergy-chip">{{ allergy.name }}</div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-submit full-width" @click="handleWelcomeUpdate">저장하고 시작하기</button>
+      </div>
+    </div>
+  </div>
+</Transition>
+
   <div class="mypage-wrapper">
     <div class="profile-card">
       <div class="card-header">
@@ -33,7 +98,7 @@
             <div class="info-box">
               <span class="label">성별 : </span>
               <span class="value">{{
-                profileData.gender === "M" || profileData.gender === null ? "남성" : "여성"
+                profileData.gender == 'M' ? "남자" : "여자"
               }}</span>
             </div>
             <div class="info-box">
@@ -356,6 +421,10 @@ import defaultImg from "@/assets/pill.jpg";
 
 const router = useRouter();
 const authStore = useAuthStore();
+const showWelcomeModal = ref(false);
+
+const isGenreOpen = ref(false);
+const isAllergyOpen = ref(false);
 
 const profileData = ref(null);
 const isEditMode = ref(false);
@@ -580,14 +649,44 @@ const fetchProfile = async () => {
   }
 };
 
-onMounted(() => {
-  fetchProfile();
+onMounted( async () => {
+  await fetchProfile(); // 프로필 정보를 먼저 가져옵니다.
+  
+  if (authStore.isNewUser) {
+    showWelcomeModal.value = true;
+    // 백엔드에서 받은 기본 데이터를 수정 폼 데이터로 복사
+    editedData.value = {
+      ...profileData.value,
+      interested_genres: [],
+      allergies: [],
+    };
+  }
+
   fetchAllCategories();
   fetchAllAllergies();
   fetchMyPills();
   fetchCustomPills();
   fetchIngredients();
 });
+
+const handleWelcomeUpdate = async () => {
+  if (!editedData.value.age || !editedData.value.gender) {
+    alert("성별과 나이를 정확히 입력해주세요! 💊");
+    return;
+  }
+
+  try {
+    // 백엔드 user_profile API(PUT)를 사용하여 한꺼번에 저장
+    await axios.put("/accounts/profile/", editedData.value, config);
+    
+    authStore.isNewUser = false; // 스토어 플래그 해제
+    showWelcomeModal.value = false; // 모달 닫기
+    alert("정보가 성공적으로 등록되었습니다! 이제 MyPill을 즐겨보세요! ✨");
+    fetchProfile(); // 변경된 정보 다시 로드
+  } catch (err) {
+    alert("정보 저장 중 오류가 발생했습니다.");
+  }
+};
 
 const enterEditMode = () => {
   editedData.value = {
@@ -956,6 +1055,28 @@ const moveToDeletePage = () => {
 }
 
 /* [8] 모달 스타일 */
+.welcome-overlay {
+  z-index: 3000 !important; /* 다른 모달보다 위에 위치 */
+}
+.welcome-card {
+  max-width: 550px !important;
+}
+.welcome-desc {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+.checkbox-group.mini {
+  grid-template-columns: repeat(3, 1fr); /* 3열로 촘촘하게 표시 */
+  gap: 8px;
+}
+.btn-submit.full-width {
+  width: 100%;
+}
+
+
+
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1183,5 +1304,138 @@ const moveToDeletePage = () => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+/* [13] 환영 모달 전용 토글 섹션 (Accordion) */
+.toggle-section {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f8fafc;
+  transition: all 0.3s ease;
+}
+
+.toggle-header {
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  background: white;
+  transition: background 0.2s;
+}
+
+.toggle-header:hover {
+  background: #f1f5f9;
+}
+
+.section-label {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #334155;
+  display: flex;
+  flex-direction: column;
+}
+
+.section-label.allergy-label {
+  color: #e11d48; /* 알러지는 붉은색 계열로 강조 */
+}
+
+.sub-text {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+.toggle-icon {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggle-icon.rotated {
+  transform: rotate(180deg);
+}
+
+/* 토글 애니메이션 핵심: max-height 활용 */
+.toggle-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s;
+  background: #f8fafc;
+}
+
+.toggle-content.open {
+  max-height: 400px; /* 충분한 높이 설정 */
+  padding: 15px;
+  border-top: 1px solid #e2e8f0;
+  overflow-y: auto;
+}
+
+/* [14] 카테고리/알러지 칩(Chip) 체크박스 스타일 */
+.category-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cat-item {
+  cursor: pointer;
+}
+
+.hidden-checkbox {
+  display: none; /* 실제 체크박스는 숨김 */
+}
+
+/* 기본 칩 스타일 (관심분야) */
+.cat-chip {
+  padding: 8px 14px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.cat-chip:hover {
+  border-color: #42b983;
+  color: #42b983;
+  background: #f0fdf4;
+}
+
+/* 체크되었을 때 (관심분야 - 녹색) */
+.cat-item input:checked + .cat-chip {
+  background: #42b983;
+  color: white;
+  border-color: #42b983;
+  box-shadow: 0 4px 10px rgba(66, 185, 131, 0.2);
+}
+
+/* 체크되었을 때 (알러지 - 적색) */
+.cat-item input:checked + .cat-chip.allergy-chip {
+  background: #f43f5e;
+  color: white;
+  border-color: #f43f5e;
+  box-shadow: 0 4px 10px rgba(244, 63, 94, 0.2);
+}
+
+/* 환영 모달 내부 레이아웃 조정 */
+.input-row-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+/* 스크롤바 커스텀 (모달 내부) */
+.toggle-content::-webkit-scrollbar {
+  width: 4px;
+}
+.toggle-content::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 10px;
 }
 </style>

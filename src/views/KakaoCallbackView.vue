@@ -15,16 +15,19 @@ onMounted(async () => {
   if (code) {
     try {
       // 2. 백엔드(Django)의 kakao_login 뷰로 코드 전송
-      const response = await axios.post(
-        "/accounts/kakao/login/",
-        {
-          code: code,
-        }
-      );
+      const response = await axios.post("/accounts/kakao/login/", {
+        code: code,
+      });
 
       // 3. 백엔드에서 받은 우리 서비스 전용 토큰 저장
       authStore.saveToken(response.data);
-      router.push({ name: "Home" });
+
+      if (response.data.is_new_user) {
+        // 🚩 신규 유저라면 마이페이지로 이동
+        router.push({ name: "MyPage" });
+      } else {
+        router.push({ name: "Home" });
+      }
     } catch (err) {
       console.error("카카오 로그인 에러:", err);
       alert("로그인 처리 중 오류가 발생했습니다.");

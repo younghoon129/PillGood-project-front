@@ -7,6 +7,7 @@ export const useAuthStore = defineStore("auth", {
     username: localStorage.getItem("username") || null,
     userId: localStorage.getItem("userId") || null,
     nickname: localStorage.getItem("nickname") || null,
+    isNewUser: false,
   }),
   getters: {
     isLoggedIn: (state) => !!state.token,
@@ -48,11 +49,13 @@ export const useAuthStore = defineStore("auth", {
       this.username = data.username;
       this.userId = data.id;
       this.nickname = data.nickname;
+      this.isNewUser = data.is_new_user;
+
       localStorage.setItem("token", this.token);
       localStorage.setItem("username", this.username);
       localStorage.setItem("nickname", this.nickname);
       localStorage.setItem("userId", this.userId);
-      
+
       // 이후 모든 axios 요청에 토큰 자동 포함
       axios.defaults.headers.common["Authorization"] = `Token ${this.token}`;
     },
@@ -61,6 +64,7 @@ export const useAuthStore = defineStore("auth", {
       this.token = null;
       this.username = null;
       this.nickname = null;
+      this.isNewUser = false;
       localStorage.clear();
       delete axios.defaults.headers.common["Authorization"];
     },
