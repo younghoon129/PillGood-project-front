@@ -1,59 +1,59 @@
 <script setup>
-import { ref,watch } from 'vue'
-import { useRouter } from 'vue-router'
-import ChatBotView from './ChatBotView.vue'
+import { ref, watch } from "vue";
+import { useRouter } from "vue-router";
+import ChatBotView from "./ChatBotView.vue";
 
-const router = useRouter()
+const router = useRouter();
 
-const showChatModal = ref(false)
-const showAboutModal = ref(false)
+const showChatModal = ref(false);
+const showAboutModal = ref(false);
 
 // 스크롤 잠금
 watch(showChatModal, (newValue) => {
-  document.body.style.overflow = newValue ? 'hidden' : ''
-})
+  document.body.style.overflow = newValue ? "hidden" : "";
+});
 watch(showAboutModal, (newValue) => {
-  document.body.style.overflow = newValue ? 'hidden' : ''
-})
-
-
+  document.body.style.overflow = newValue ? "hidden" : "";
+});
 
 watch(showChatModal, (newValue) => {
   if (newValue) {
-    document.body.style.overflow = 'hidden' // 스크롤 잠금
+    document.body.style.overflow = "hidden"; // 스크롤 잠금
   } else {
-    document.body.style.overflow = '' // 스크롤 해제
+    document.body.style.overflow = ""; // 스크롤 해제
   }
-})
+});
 
 // '영양제 리스트' 페이지로 이동
 const goPillList = () => {
-  router.push({ name: 'pills_index' })
-}
+  router.push({ name: "pills_index" });
+};
 
 // '맞춤 추천' 페이지로 이동
 const goRecommendation = () => {
   // router/index.js에 등록한 name: 'recommendation'으로 이동
-  router.push({ name: 'recommendation' })
-}
+  router.push({ name: "recommendation" });
+};
 
 const goChatBot = () => {
-  showChatModal.value = true
-}
+  showChatModal.value = true;
+};
 
-const openAbout = () => showAboutModal.value = true
-const closeAboutModal = () => showAboutModal.value = false
-
+const openAbout = () => (showAboutModal.value = true);
+const closeAboutModal = () => (showAboutModal.value = false);
 
 // 준비 중 알림 함수
 const alertNotReady = () => {
-  alert("준비 중인 기능입니다! 조금만 기다려주세요 🛠️")
-}
+  alert("준비 중인 기능입니다! 조금만 기다려주세요 🛠️");
+};
 </script>
 
 <template>
   <div class="home-wrapper">
-    <div class="main-container" :class="{ 'is-blurred': showChatModal, 'is-blurred': showAboutModal }">
+    <div
+      class="main-container"
+      :class="{ 'is-blurred': showChatModal, 'is-blurred': showAboutModal }"
+    >
       <section class="hero">
         <div class="content">
           <h1 class="title">
@@ -68,7 +68,7 @@ const alertNotReady = () => {
             PillGood을 소개합니다 →
           </button>
         </div>
-        
+
         <div class="visual">
           <div class="circle-deco">💊</div>
         </div>
@@ -77,33 +77,41 @@ const alertNotReady = () => {
       <section class="features">
         <div class="feature-item" @click="goPillList">
           <h3>🔍 영양제 찾아보기</h3>
-          <p>다양한 영양제<br>쉽게 확인해보세요</p>
+          <p>다양한 영양제<br />쉽게 확인해보세요</p>
         </div>
 
         <div class="feature-item" @click="goChatBot">
           <h3>🤖 AI 추천 서비스</h3>
-          <p>나의 상황에 필요한 <br>영양제를 알려드려요</p>
+          <p>나의 상황에 필요한 <br />영양제를 알려드려요</p>
         </div>
 
         <div class="feature-item" @click="goRecommendation">
           <h3>📋 맞춤 추천</h3>
-          <p>증상과 목적에 맞는<br>영양제를 찾으세요</p>
+          <p>증상과 목적에 맞는<br />영양제를 찾으세요</p>
         </div>
       </section>
     </div>
 
     <Transition name="modal-fade">
-      <div v-if="showChatModal" class="modal-overlay" @click.self="showChatModal = false">
+      <div
+        v-if="showChatModal"
+        class="modal-overlay"
+        @click.self="showChatModal = false"
+      >
         <div class="modal-window">
           <ChatBotView @close="showChatModal = false" />
         </div>
       </div>
     </Transition>
     <Transition name="modal-fade">
-      <div v-if="showAboutModal" class="modal-overlay" @click.self="closeAboutModal">
+      <div
+        v-if="showAboutModal"
+        class="modal-overlay"
+        @click.self="closeAboutModal"
+      >
         <div class="modal-window about-window">
           <button class="close-btn" @click="closeAboutModal">×</button>
-          
+
           <div class="about-content">
             <div class="about-header">
               <h2>PillGood을 소개합니다</h2>
@@ -112,12 +120,14 @@ const alertNotReady = () => {
 
             <div class="about-body">
               <p class="vision-text">
-                <span class="highlight-brand">PillGood</span>은 
-                <strong>'기분 좋다(Feel Good)'</strong>라는 의미처럼, 
-                영양제 선택의 스트레스를 덜고 소비자의 건강한 삶을 응원합니다. <br class="pc-br">
-                우리는 <strong>식품의약품안전처</strong> 기반의 데이터를 통해 
-                복잡한 성분표를 투명하게 분석하며, 누구나 쉽고 안전하게 자신에게 맞는 영양제를 찾을 수 있는 
-                행복한 헬스케어 경험을 만들어 가겠습니다.
+                <span class="highlight-brand">PillGood</span>은
+                <strong>'기분 좋다(Feel Good)'</strong>라는 의미처럼, 영양제
+                선택의 스트레스를 덜고 소비자의 건강한 삶을 응원합니다.
+                <br class="pc-br" />
+                우리는 <strong>식품의약품안전처</strong> 기반의 데이터를 통해
+                복잡한 성분표를 투명하게 분석하며, 누구나 쉽고 안전하게 자신에게
+                맞는 영양제를 찾을 수 있는 행복한 헬스케어 경험을 만들어
+                가겠습니다.
               </p>
               <ul class="feature-list">
                 <li>✨ 4,000여 종의 영양제 데이터베이스 구축</li>
@@ -134,26 +144,39 @@ const alertNotReady = () => {
                     <span class="icon">📅</span>
                     <div class="text">
                       <strong>스마트한 일정 관리</strong>
-                      <p>마이페이지에서 <span>구글 계정</span>을 연동하면 섭취 일정을 캘린더에 자동으로 등록해 드려요.</p>
+                      <p>
+                        마이페이지에서 <span>구글 계정</span>을 연동하면 섭취
+                        일정을 캘린더에 자동으로 등록해 드려요.
+                      </p>
                     </div>
                   </li>
                   <li>
                     <span class="icon">🛡️</span>
                     <div class="text">
                       <strong>안심 알레르기 체크</strong>
-                      <p>나의 알레르기 성분을 미리 설정해 보세요! 해당 성분이 포함된 영양제를 볼 때 <span>경고 알림</span>을 띄워줍니다.</p>
+                      <p>
+                        나의 알레르기 성분을 미리 설정해 보세요! 해당 성분이
+                        포함된 영양제를 볼 때 <span>경고 알림</span>을
+                        띄워줍니다.
+                      </p>
                     </div>
                   </li>
                   <li>
                     <span class="icon">💊</span>
                     <div class="text">
                       <strong>중복 섭취 방지</strong>
-                      <p>영양제함에 영양제를 보관해 보세요! 다른 영양제를 볼 때 성분이 겹쳐 <span>과다 섭취</span> 위험이 있을 경우 즉시 알려드려요.</p>
+                      <p>
+                        영양제함에 영양제를 보관해 보세요! 다른 영양제를 볼 때
+                        성분이 겹쳐 <span>과다 섭취</span> 위험이 있을 경우 즉시
+                        알려드려요.
+                      </p>
                     </div>
                   </li>
                 </ul>
               </div>
-              <p class="highlight-text">우리는 데이터로 더 정직한 건강 세상을 만듭니다.</p>
+              <p class="highlight-text">
+                우리는 데이터로 더 정직한 건강 세상을 만듭니다.
+              </p>
               <div class="source-info">
                 <p>📢 데이터 출처 안내</p>
                 <div class="source-details">
@@ -178,12 +201,12 @@ const alertNotReady = () => {
   margin-bottom: 10px;
   padding-top: 15px;
   border-top: 1px solid #e9ecef;
-  
+
   /* 1. 다시 가운데 정렬로 복귀 */
   text-align: center;
-  
+
   /* 2. 🔥 핵심: 전체 위치를 강제로 왼쪽으로 조금 밀기 */
-  position: relative; 
+  position: relative;
   left: -10px; /* 마이너스(-) 값을 주면 왼쪽으로 이동합니다. 숫자를 조절해보세요! */
 }
 
@@ -193,7 +216,7 @@ const alertNotReady = () => {
   color: #adb5bd;
   margin-bottom: 6px;
   font-weight: 500;
-  
+
   /* 타이틀도 가운데 정렬 유지를 위해 flex + center 사용 */
   display: flex;
   justify-content: center; /* 가운데 정렬 */
@@ -223,39 +246,42 @@ const alertNotReady = () => {
   font-size: 0.6rem;
 }
 
-
 /* ... 기존 스타일 유지 ... */
 
 .vision-text {
-    font-size: 16px;            /* 글자 크기 적당히 */
-    line-height: 1.8;           /* 줄 간격을 넓혀 읽기 편하게 */
-    color: #4B5563;             /* 촌스러운 검정 대신 진한 회색 */
-    margin: 0;                  /* 기본 여백 제거 (필요시 조정) */
-    word-break: keep-all;       /* 단어 중간에 줄바꿈 방지 */
-  }
+  font-size: 16px; /* 글자 크기 적당히 */
+  line-height: 1.8; /* 줄 간격을 넓혀 읽기 편하게 */
+  color: #4b5563; /* 촌스러운 검정 대신 진한 회색 */
+  margin: 0; /* 기본 여백 제거 (필요시 조정) */
+  word-break: keep-all; /* 단어 중간에 줄바꿈 방지 */
+}
 
-  /* 1. PillGood 브랜드명 강조 (색상 + 굵기) */
-  .highlight-brand {
-    color: #1c7ed6;             /* 신뢰감을 주는 에메랄드 그린 */
-    font-weight: 800;           /* 가장 두껍게 */
-    font-size: 1.1em;           /* 살짝 키움 */
-  }
+/* 1. PillGood 브랜드명 강조 (색상 + 굵기) */
+.highlight-brand {
+  color: #1c7ed6; /* 신뢰감을 주는 에메랄드 그린 */
+  font-weight: 800; /* 가장 두껍게 */
+  font-size: 1.1em; /* 살짝 키움 */
+}
 
-  /* 2. 'Feel Good' 의미 강조 (배경 형광펜 효과) */
-  .highlight-meaning {
-    background: linear-gradient(to top, #D1FAE5 40%, transparent 40%); /* 아래쪽만 연한 형광펜 칠한 느낌 */
-    font-weight: 700;
-  }
+/* 2. 'Feel Good' 의미 강조 (배경 형광펜 효과) */
+.highlight-meaning {
+  background: linear-gradient(
+    to top,
+    #d1fae5 40%,
+    transparent 40%
+  ); /* 아래쪽만 연한 형광펜 칠한 느낌 */
+  font-weight: 700;
+}
 
-  /* 3. 식약처 강조 (밑줄 효과) */
-  .highlight-trust {
-    font-weight: 700;
-    text-decoration: underline;
-    text-decoration-color: #10B981; /* 초록색 밑줄 */
-    text-decoration-thickness: 2px; /* 밑줄 두께 */
-    text-underline-offset: 4px;     /* 글자와 밑줄 사이 간격 */
-    color: #1F2937;             /* 진한 검정 */
-  }
+/* 3. 식약처 강조 (밑줄 효과) */
+.highlight-trust {
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: #10b981; /* 초록색 밑줄 */
+  text-decoration-thickness: 2px; /* 밑줄 두께 */
+  text-underline-offset: 4px; /* 글자와 밑줄 사이 간격 */
+  color: #1f2937; /* 진한 검정 */
+}
 
 .main-container {
   max-width: 1200px;
@@ -295,7 +321,7 @@ const alertNotReady = () => {
 }
 
 .highlight::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 5px;
   left: 0;
@@ -350,9 +376,15 @@ const alertNotReady = () => {
 }
 
 @keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 .features {
@@ -365,18 +397,18 @@ const alertNotReady = () => {
   background-color: white;
   padding: 30px;
   border-radius: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   border: 1px solid #f1f3f5;
   transition: transform 0.3s, box-shadow 0.3s;
-  
+
   /* ▼▼▼ 클릭 가능한 느낌 추가 ▼▼▼ */
-  cursor: pointer; 
+  cursor: pointer;
 }
 
 /* 호버 시 살짝 떠오르면서 그림자 진해짐 */
 .feature-item:hover {
   transform: translateY(-8px);
-  box-shadow: 0 12px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
   border-color: #1c7ed6; /* 테두리 파란색 포인트 */
 }
 
@@ -398,9 +430,17 @@ const alertNotReady = () => {
     text-align: center;
     margin-bottom: 50px;
   }
-  .title { font-size: 2.5rem; }
-  .circle-deco { width: 200px; height: 200px; font-size: 5rem; }
-  .features { flex-direction: column; }
+  .title {
+    font-size: 2.5rem;
+  }
+  .circle-deco {
+    width: 200px;
+    height: 200px;
+    font-size: 5rem;
+  }
+  .features {
+    flex-direction: column;
+  }
 }
 
 /* 🚩 블러 효과: 모달이 켜졌을 때 배경 흐리게 */
@@ -444,11 +484,12 @@ const alertNotReady = () => {
 /* [수정 6] 기업 소개 모달 스타일 추가 */
 .about-window {
   width: 90%;
-  max-width: 500px;
-  height: auto; /* 내용에 맞게 높이 조절 */
+  max-width: 700px;
+  height: 1000px;
   flex-direction: column;
   position: relative;
   padding: 0;
+  overflow-y: scroll;
 }
 
 .about-content {
@@ -526,10 +567,12 @@ const alertNotReady = () => {
 }
 
 /* 모달 애니메이션 */
-.modal-fade-enter-active, .modal-fade-leave-active {
+.modal-fade-enter-active,
+.modal-fade-leave-active {
   transition: all 0.4s ease;
 }
-.modal-fade-enter-from, .modal-fade-leave-to {
+.modal-fade-enter-from,
+.modal-fade-leave-to {
   opacity: 0;
   transform: translateY(20px);
 }
