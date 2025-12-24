@@ -50,7 +50,7 @@
               class="user-item"
             >
               <div class="user-main">
-                <template v-if="checkIfSocial(user)">
+                <template v-if="checkIfSocial(user.username)">
                   <span class="social-instruction">
                     <strong>{{ getSocialProvider(user.username) }}</strong>
                     계정입니다.
@@ -59,18 +59,18 @@
                     {{ getSocialProvider(user.username) }} 로그인
                   </span>
                 </template>
-
                 <template v-else>
                   <span class="user-id">{{ user.username }}</span>
                   <span class="badge local">일반 계정</span>
                 </template>
               </div>
-
-              <div v-if="checkIfSocial(user)" class="social-login-guide">
+              <div
+                v-if="checkIfSocial(user.username)"
+                class="social-login-guide"
+              >
                 "{{ getSocialProvider(user.username) }}로 로그인하기"를 이용해
                 주세요.
               </div>
-
               <div class="user-date">가입일: {{ user.date_joined }}</div>
             </div>
           </div>
@@ -91,7 +91,7 @@
             <input
               v-model="emailForPw"
               type="email"
-              placeholder="example@email.com"
+              placeholder="가입한 이메일을 입력하세요"
               @keyup.enter="handleSendCode"
             />
           </div>
@@ -104,8 +104,8 @@
           </button>
         </div>
 
-        <div v-else class="pw-reset-step">
-          <p class="info-msg">인증번호와 새 비밀번호를 입력하세요.</p>
+        <div v-else-if="pwStep === 2">
+          <p class="info-msg">메일로 발송된 인증번호 6자리를 입력하세요.</p>
           <div class="input-group">
             <label>인증번호</label>
             <input
@@ -113,14 +113,71 @@
               type="text"
               placeholder="6자리 숫자"
               maxlength="6"
+              @keyup.enter="handleVerifyCode"
             />
           </div>
+          <button
+            @click="handleVerifyCode"
+            class="submit-btn"
+            :disabled="isLoading"
+          >
+            인증 확인
+          </button>
+          <button @click="pwStep = 1" class="back-btn">이메일 다시 입력</button>
+        </div>
+
+        <div v-else-if="pwStep === 3" class="result-box">
+          <p class="result-msg">비밀번호를 재설정할 계정을 선택해 주세요.</p>
+          <div class="user-list">
+            <div
+              v-for="acc in pwAccountList"
+              :key="acc.username"
+              class="user-item selectable"
+              :class="{
+                selected: selectedUsername === acc.username,
+                disabled: checkIfSocial(acc.username),
+              }"
+              @click="
+                !checkIfSocial(acc.username) &&
+                  (selectedUsername = acc.username)
+              "
+            >
+              <div class="user-main">
+                <span class="user-id">{{ acc.username }}</span>
+                <span
+                  v-if="checkIfSocial(acc.username)"
+                  :class="['badge', getSocialClass(acc.username)]"
+                >
+                  {{ getSocialProvider(acc.username) }} (변경 불가)
+                </span>
+                <span v-else class="badge local">일반 계정</span>
+              </div>
+              <p v-if="checkIfSocial(acc.username)" class="social-guide-small">
+                소셜 계정 비밀번호는 해당 플랫폼에서 변경 가능합니다.
+              </p>
+            </div>
+          </div>
+          <button
+            @click="pwStep = 4"
+            class="submit-btn"
+            :disabled="!selectedUsername"
+          >
+            선택한 계정으로 계속하기
+          </button>
+        </div>
+
+        <div v-else-if="pwStep === 4">
+          <p class="info-msg">
+            <strong>[{{ selectedUsername }}]</strong> 계정의 새 비밀번호를
+            입력하세요.
+          </p>
           <div class="input-group">
             <label>새 비밀번호</label>
             <input
               v-model="newPassword"
               type="password"
               placeholder="8자 이상 입력"
+              @keyup.enter="handleResetPassword"
             />
           </div>
           <button
@@ -128,10 +185,7 @@
             class="submit-btn"
             :disabled="isLoading"
           >
-            {{ isLoading ? "처리 중..." : "비밀번호 변경 완료" }}
-          </button>
-          <button @click="pwStep = 1" class="back-btn">
-            이메일 다시 입력하기
+            비밀번호 변경 완료
           </button>
         </div>
       </div>
@@ -152,21 +206,22 @@ import { useRouter } from "vue-router";
 
 const router = useRouter();
 
-// 1. 공통 상태 관리
+// 공통 상태
 const currentTab = ref("id");
 const isLoading = ref(false);
 
-// 2. 아이디 찾기 관련 상태
+// 아이디 찾기 상태
 const emailForId = ref("");
 const foundUsers = ref([]);
 
-// 3. 비밀번호 찾기 관련 상태
+// 비밀번호 찾기 상태
 const pwStep = ref(1);
 const emailForPw = ref("");
 const authCode = ref("");
+const pwAccountList = ref([]);
+const selectedUsername = ref("");
 const newPassword = ref("");
 
-// [기능] 탭 전환 시 모든 입력값 초기화
 const changeTab = (tab) => {
   currentTab.value = tab;
   foundUsers.value = [];
@@ -174,20 +229,19 @@ const changeTab = (tab) => {
   emailForId.value = "";
   emailForPw.value = "";
   authCode.value = "";
+  pwAccountList.value = [];
+  selectedUsername.value = "";
   newPassword.value = "";
 };
 
-// 🚩 [기능] 소셜 계정 여부 판별 (이중 체크)
-const checkIfSocial = (user) => {
+const checkIfSocial = (username) => {
   return (
-    user.is_social ||
-    user.username.startsWith("naver_") ||
-    user.username.startsWith("kakao_") ||
-    user.username.startsWith("google_")
+    username.startsWith("naver_") ||
+    username.startsWith("kakao_") ||
+    username.startsWith("google_")
   );
 };
 
-// 🚩 [기능] 플랫폼 이름 반환
 const getSocialProvider = (username) => {
   if (username.startsWith("naver_")) return "네이버";
   if (username.startsWith("kakao_")) return "카카오";
@@ -195,7 +249,6 @@ const getSocialProvider = (username) => {
   return "소셜";
 };
 
-// 🚩 [기능] 플랫폼별 디자인 클래스 반환
 const getSocialClass = (username) => {
   if (username.startsWith("naver_")) return "naver-bg";
   if (username.startsWith("kakao_")) return "kakao-bg";
@@ -203,7 +256,6 @@ const getSocialClass = (username) => {
   return "local";
 };
 
-// [API] 아이디 찾기 요청
 const handleFindId = async () => {
   if (!emailForId.value) return alert("이메일을 입력해 주세요.");
   isLoading.value = true;
@@ -219,7 +271,6 @@ const handleFindId = async () => {
   }
 };
 
-// [API] 인증번호 발송 요청
 const handleSendCode = async () => {
   if (!emailForPw.value) return alert("이메일을 입력해 주세요.");
   isLoading.value = true;
@@ -227,30 +278,46 @@ const handleSendCode = async () => {
     await axios.post("/accounts/password-reset-send/", {
       email: emailForPw.value,
     });
-    alert("인증번호가 발송되었습니다. 메일함을 확인해 주세요!");
+    alert("인증번호가 발송되었습니다!");
     pwStep.value = 2;
   } catch (err) {
-    alert(err.response?.data?.error || "인증번호 발송에 실패했습니다.");
+    alert(err.response?.data?.error || "발송 실패");
   } finally {
     isLoading.value = false;
   }
 };
 
-// [API] 비밀번호 재설정 확정 요청
+const handleVerifyCode = async () => {
+  if (!authCode.value) return alert("인증번호를 입력해 주세요.");
+  isLoading.value = true;
+  try {
+    const res = await axios.post("/accounts/password-reset-verify/", {
+      email: emailForPw.value,
+      code: authCode.value,
+    });
+    pwAccountList.value = res.data.user_list;
+    pwStep.value = 3;
+  } catch (err) {
+    alert(err.response?.data?.error || "인증번호가 틀렸거나 만료되었습니다.");
+  } finally {
+    isLoading.value = false;
+  }
+};
+
 const handleResetPassword = async () => {
-  if (!authCode.value || !newPassword.value)
-    return alert("모든 항목을 입력해 주세요.");
+  if (!newPassword.value) return alert("새 비밀번호를 입력해 주세요.");
   isLoading.value = true;
   try {
     await axios.post("/accounts/password-reset-confirm/", {
       email: emailForPw.value,
       code: authCode.value,
+      username: selectedUsername.value,
       new_password: newPassword.value,
     });
     alert("비밀번호가 안전하게 변경되었습니다. 다시 로그인해 주세요.");
     router.push({ name: "Login" });
   } catch (err) {
-    alert(err.response?.data?.error || "인증 정보가 일치하지 않습니다.");
+    alert(err.response?.data?.error || "변경 실패");
   } finally {
     isLoading.value = false;
   }
@@ -258,17 +325,16 @@ const handleResetPassword = async () => {
 </script>
 
 <style scoped>
-/* 전체 배경 */
+/* [1] 기본 레이아웃 */
 .find-account-wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 85vh;
+  min-height: 90vh;
   background-color: #f1f4f9;
   padding: 20px;
 }
 
-/* 찾기 박스 */
 .find-box {
   width: 100%;
   max-width: 480px;
@@ -282,18 +348,20 @@ const handleResetPassword = async () => {
   text-align: center;
   margin-bottom: 30px;
 }
+
 .find-header h2 {
   font-size: 1.6rem;
   font-weight: 800;
   color: #1e293b;
   margin-bottom: 8px;
 }
+
 .find-header p {
   color: #64748b;
   font-size: 0.95rem;
 }
 
-/* 탭 스타일 */
+/* [2] 탭 메뉴 */
 .tab-menu {
   display: flex;
   border-bottom: 2px solid #f1f5f9;
@@ -316,7 +384,7 @@ const handleResetPassword = async () => {
   border-bottom: 2px solid #1c7ed6;
 }
 
-/* 입력 그룹 */
+/* [3] 공통 입력창 및 버튼 */
 .input-group {
   display: flex;
   flex-direction: column;
@@ -324,25 +392,20 @@ const handleResetPassword = async () => {
   margin-bottom: 20px;
   text-align: left;
 }
+
 .input-group label {
   font-size: 0.9rem;
   font-weight: 700;
   color: #475569;
-  padding-left: 4px;
 }
+
 .input-group input {
   padding: 14px;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   font-size: 1rem;
 }
-.input-group input:focus {
-  border-color: #1c7ed6;
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(28, 126, 214, 0.1);
-}
 
-/* 버튼 스타일 */
 .submit-btn {
   width: 100%;
   padding: 16px;
@@ -354,19 +417,17 @@ const handleResetPassword = async () => {
   cursor: pointer;
   transition: 0.2s;
 }
-.submit-btn:hover:not(:disabled) {
-  background-color: #1864ab;
-  transform: translateY(-1px);
-}
+
 .submit-btn:disabled {
   background-color: #cbd5e1;
   cursor: not-allowed;
 }
 
-/* 결과 리스트 */
+/* [4] 결과 리스트 및 아이템 디자인 */
 .result-box {
   text-align: center;
 }
+
 .result-msg {
   margin-bottom: 20px;
   color: #64748b;
@@ -379,6 +440,7 @@ const handleResetPassword = async () => {
   gap: 12px;
   margin-bottom: 25px;
 }
+
 .user-item {
   background: #f8fafc;
   padding: 18px;
@@ -387,58 +449,86 @@ const handleResetPassword = async () => {
   text-align: left;
 }
 
+/* 계정 선택용 특수 스타일 */
+.user-item.selectable {
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: 0.2s;
+}
+
+.user-item.selectable:hover:not(.disabled) {
+  border-color: #1c7ed6;
+  background: #e7f5ff;
+}
+
+.user-item.selected {
+  border-color: #1c7ed6;
+  background: #e7f5ff;
+}
+
+.user-item.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f1f5f9;
+}
+
 .user-main {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 8px;
 }
+
 .user-id {
   font-size: 1.1rem;
   font-weight: 800;
   color: #1c7ed6;
 }
 
-/* 🚩 소셜 안내 텍스트 스타일 */
+/* [5] 소셜 뱃지 및 안내 */
 .social-instruction {
-  font-size: 1.05rem;
+  font-size: 1rem;
   color: #334155;
 }
+
 .social-instruction strong {
   color: #1c7ed6;
-  font-weight: 800;
 }
 
 .social-login-guide {
   font-size: 0.85rem;
   color: #475569;
   background: #ffffff;
-  padding: 12px;
-  border-radius: 10px;
+  padding: 10px;
+  border-radius: 8px;
   border: 1px dashed #cbd5e1;
   margin: 10px 0;
-  font-weight: 600;
   text-align: center;
 }
 
-/* 🚩 소셜 뱃지 컬러 */
+.social-guide-small {
+  font-size: 0.75rem;
+  color: #ef4444;
+}
+
 .badge {
   font-size: 0.75rem;
   padding: 4px 10px;
   border-radius: 6px;
   font-weight: 700;
 }
+
 .naver-bg {
-  background: #03c75a !important;
-  color: white !important;
+  background: #03c75a;
+  color: white;
 }
 .kakao-bg {
-  background: #fee500 !important;
-  color: #3c1e1e !important;
+  background: #fee500;
+  color: #3c1e1e;
 }
 .google-bg {
-  background: #ffffff !important;
-  color: #333 !important;
+  background: #ffffff;
+  color: #333;
   border: 1px solid #ddd;
 }
 .local {
@@ -452,7 +542,18 @@ const handleResetPassword = async () => {
   margin-top: 5px;
 }
 
-/* 기타 버튼 */
+/* [6] 유틸리티 버튼 */
+.retry-btn,
+.back-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  margin-top: 15px;
+  cursor: pointer;
+  text-decoration: underline;
+  width: 100%;
+}
+
 .login-link-btn.primary {
   background: #1c7ed6;
   color: white;
@@ -461,17 +562,8 @@ const handleResetPassword = async () => {
   border-radius: 12px;
   border: none;
   font-weight: 700;
-  cursor: pointer;
   margin-top: 15px;
-}
-.retry-btn {
-  background: none;
-  border: none;
-  color: #94a3b8;
-  margin-top: 12px;
   cursor: pointer;
-  text-decoration: underline;
-  width: 100%;
 }
 
 .info-msg {
@@ -479,27 +571,20 @@ const handleResetPassword = async () => {
   font-size: 0.9rem;
   margin-bottom: 20px;
   font-weight: 700;
-}
-.back-btn {
-  background: none;
-  border: none;
-  color: #94a3b8;
-  margin-top: 15px;
-  cursor: pointer;
-  width: 100%;
+  text-align: center;
 }
 
 .footer-links {
   margin-top: 30px;
-  border-top: 1px solid #f1f5f9;
   padding-top: 20px;
+  border-top: 1px solid #f1f5f9;
   text-align: center;
 }
+
 .footer-links button {
   background: none;
   border: none;
   color: #94a3b8;
   cursor: pointer;
-  font-size: 0.9rem;
 }
 </style>
