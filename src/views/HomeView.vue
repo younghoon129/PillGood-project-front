@@ -127,6 +127,32 @@ const alertNotReady = () => {
                 <li>💬 100% 내돈내산 사용자 후기 공유</li>
                 <li>🤖 개인별 최적화된 AI 맞춤 케어</li>
               </ul>
+              <div class="usage-guide">
+                <h3 class="guide-title">💡 PillGood 100% 활용 꿀팁</h3>
+                <ul class="guide-list">
+                  <li>
+                    <span class="icon">📅</span>
+                    <div class="text">
+                      <strong>스마트한 일정 관리</strong>
+                      <p>마이페이지에서 <span>구글 계정</span>을 연동하면 섭취 일정을 캘린더에 자동으로 등록해 드려요.</p>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="icon">🛡️</span>
+                    <div class="text">
+                      <strong>안심 알레르기 체크</strong>
+                      <p>나의 알레르기 성분을 미리 설정해 보세요! 해당 성분이 포함된 영양제를 볼 때 <span>경고 알림</span>을 띄워줍니다.</p>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="icon">💊</span>
+                    <div class="text">
+                      <strong>중복 섭취 방지</strong>
+                      <p>영양제함에 영양제를 보관해 보세요! 다른 영양제를 볼 때 성분이 겹쳐 <span>과다 섭취</span> 위험이 있을 경우 즉시 알려드려요.</p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
               <p class="highlight-text">우리는 데이터로 더 정직한 건강 세상을 만듭니다.</p>
               <div class="source-info">
                 <p>📢 데이터 출처 안내</p>
