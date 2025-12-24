@@ -127,7 +127,41 @@ const alertNotReady = () => {
                 <li>💬 100% 내돈내산 사용자 후기 공유</li>
                 <li>🤖 개인별 최적화된 AI 맞춤 케어</li>
               </ul>
+              <div class="usage-guide">
+                <h3 class="guide-title">💡 PillGood 100% 활용 꿀팁</h3>
+                <ul class="guide-list">
+                  <li>
+                    <span class="icon">📅</span>
+                    <div class="text">
+                      <strong>스마트한 일정 관리</strong>
+                      <p>마이페이지에서 <span>구글 계정</span>을 연동하면 섭취 일정을 캘린더에 자동으로 등록해 드려요.</p>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="icon">🛡️</span>
+                    <div class="text">
+                      <strong>안심 알레르기 체크</strong>
+                      <p>나의 알레르기 성분을 미리 설정해 보세요! 해당 성분이 포함된 영양제를 볼 때 <span>경고 알림</span>을 띄워줍니다.</p>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="icon">💊</span>
+                    <div class="text">
+                      <strong>중복 섭취 방지</strong>
+                      <p>영양제함에 영양제를 보관해 보세요! 다른 영양제를 볼 때 성분이 겹쳐 <span>과다 섭취</span> 위험이 있을 경우 즉시 알려드려요.</p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
               <p class="highlight-text">우리는 데이터로 더 정직한 건강 세상을 만듭니다.</p>
+              <div class="source-info">
+                <p>📢 데이터 출처 안내</p>
+                <div class="source-details">
+                  <span>영양제 정보 : <strong>식품의약품안전처</strong></span>
+                  <span class="divider">|</span>
+                  <span>이미지 · 구매 정보 : <strong>네이버</strong></span>
+                </div>
+              </div>
             </div>
 
             <button @click="closeAboutModal" class="confirm-btn">확인</button>
@@ -139,6 +173,57 @@ const alertNotReady = () => {
 </template>
 
 <style scoped>
+.source-info {
+  margin-top: 24px;
+  margin-bottom: 10px;
+  padding-top: 15px;
+  border-top: 1px solid #e9ecef;
+  
+  /* 1. 다시 가운데 정렬로 복귀 */
+  text-align: center;
+  
+  /* 2. 🔥 핵심: 전체 위치를 강제로 왼쪽으로 조금 밀기 */
+  position: relative; 
+  left: -10px; /* 마이너스(-) 값을 주면 왼쪽으로 이동합니다. 숫자를 조절해보세요! */
+}
+
+/* "데이터 출처 안내" 타이틀 */
+.source-info p {
+  font-size: 0.75rem;
+  color: #adb5bd;
+  margin-bottom: 6px;
+  font-weight: 500;
+  
+  /* 타이틀도 가운데 정렬 유지를 위해 flex + center 사용 */
+  display: flex;
+  justify-content: center; /* 가운데 정렬 */
+  align-items: center;
+  gap: 4px;
+}
+
+/* 실제 출처 텍스트들 */
+.source-details {
+  display: flex;
+  justify-content: center; /* 내용물 가운데 정렬 */
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.7rem;
+  color: #868e96;
+}
+
+/* (나머지 스타일 동일) */
+.source-details strong {
+  font-weight: 600;
+  color: #495057;
+}
+
+.divider {
+  color: #dee2e6;
+  font-size: 0.6rem;
+}
+
+
 /* ... 기존 스타일 유지 ... */
 
 .vision-text {
