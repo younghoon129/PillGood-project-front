@@ -85,13 +85,13 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import axios from "axios";
+import axios from "@/api/http";
 import { useAuthStore } from "@/stores/auth";
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
-const API_URL = "http://localhost:8000/pills";
+const API_URL = "/pills";
 
 const pillPk = route.params.pill_pk;
 const title = ref("");

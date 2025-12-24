@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
+import axios from "@/api/http";
 import PillCard from '@/components/pills/PillCard.vue'
 
 const route = useRoute()
@@ -13,11 +13,11 @@ onMounted(async () => {
   const subId = route.params.substanceId
   
   // 1. 성분 정보 가져오기
-  const subRes = await axios.get(`http://127.0.0.1:8000/pills/substances/${subId}/`)
+  const subRes = await axios.get(`/pills/substances/${subId}/`)
   substance.value = subRes.data
 
   // 2. 관련 영양제 6개만 가져오기 (페이지네이션 활용)
-  const pillRes = await axios.get(`http://127.0.0.1:8000/pills/substances/${subId}/pills/?page=1`)
+  const pillRes = await axios.get(`/pills/substances/${subId}/pills/?page=1`)
   topPills.value = pillRes.data.results.slice(0, 6) // 앞에서 6개만 자르기
 })
 

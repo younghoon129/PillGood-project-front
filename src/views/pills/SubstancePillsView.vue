@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
-import axios from 'axios'
+import axios from "@/api/http";
 import PillCard from '@/components/pills/PillCard.vue'
 
 const route = useRoute()
@@ -36,7 +36,7 @@ const fetchPills = (page = 1, saveHistory = true) => {
   }
 
   // 4-2. 데이터 요청 (기존 로직 동일)
-  axios.get(`http://127.0.0.1:8000/pills/substances/${subId}/pills/`, {
+  axios.get(`/pills/substances/${subId}/pills/`, {
     params: {
       page: page,
       category: selectedCategory.value.join(','), 
@@ -58,10 +58,10 @@ onMounted(async () => {
   // 브라우저 스크롤 자동 복원 방지 (뒤로가기 시 맨 위로 가기 위해)
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
 
-  const subRes = await axios.get(`http://127.0.0.1:8000/pills/substances/${subId}/`)
+  const subRes = await axios.get(`/pills/substances/${subId}/`)
   substanceName.value = subRes.data.name
   
-  const catRes = await axios.get('http://127.0.0.1:8000/pills/categories/')
+  const catRes = await axios.get('/pills/categories/')
   categoryOptions.value = catRes.data
   
   // [수정] 5. 초기 로딩 시에는 히스토리를 쌓지 않음 (false)

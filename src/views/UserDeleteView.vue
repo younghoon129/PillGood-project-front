@@ -38,13 +38,13 @@
 </template>
 
 <script setup>
-import axios from "axios";
+import axios from "@/api/http";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 
 const router = useRouter();
 const authStore = useAuthStore();
-const API_URL = "http://localhost:8000/accounts";
+const API_URL = "/accounts";
 
 const handleUserDelete = async () => {
   // 1. 브라우저 최종 확인

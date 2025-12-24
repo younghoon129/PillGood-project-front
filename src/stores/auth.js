@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import axios from "axios";
+import axios from "@/api/http";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
@@ -22,7 +22,7 @@ export const useAuthStore = defineStore("auth", {
     async signup(payload) {
       try {
         const res = await axios.post(
-          "http://localhost:8000/accounts/signup/",
+          "/accounts/signup/",
           payload
         );
         this.saveToken(res.data);
@@ -34,7 +34,7 @@ export const useAuthStore = defineStore("auth", {
     async login(payload) {
       try {
         const res = await axios.post(
-          "http://localhost:8000/accounts/login/",
+          "/accounts/login/",
           payload
         );
         this.saveToken(res.data);
@@ -51,6 +51,8 @@ export const useAuthStore = defineStore("auth", {
       localStorage.setItem("token", this.token);
       localStorage.setItem("username", this.username);
       localStorage.setItem("nickname", this.nickname);
+      localStorage.setItem("userId", this.userId);
+      
       // 이후 모든 axios 요청에 토큰 자동 포함
       axios.defaults.headers.common["Authorization"] = `Token ${this.token}`;
     },

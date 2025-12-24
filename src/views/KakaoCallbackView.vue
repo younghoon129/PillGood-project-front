@@ -2,7 +2,7 @@
 import { onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
-import axios from "axios";
+import axios from "@/api/http";
 
 const route = useRoute();
 const router = useRouter();
@@ -16,7 +16,7 @@ onMounted(async () => {
     try {
       // 2. 백엔드(Django)의 kakao_login 뷰로 코드 전송
       const response = await axios.post(
-        "http://localhost:8000/accounts/kakao/login/",
+        "/accounts/kakao/login/",
         {
           code: code,
         }

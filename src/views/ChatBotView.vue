@@ -50,7 +50,7 @@
 
 <script setup>
 import { ref, nextTick, onMounted } from "vue";
-import axios from "axios";
+import axios from "@/api/http";
 import { useAuthStore } from "@/stores/auth";
 
 const emit = defineEmits(["close"]);
@@ -86,7 +86,7 @@ const sendMessage = async () => {
 
   try {
     const res = await axios.post(
-      "http://localhost:8000/pills/chatbot/",
+      "/pills/chatbot/",
       { message: userMsg },
       { headers: { Authorization: `Token ${authStore.token}` } }
     );

@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import axios from "@/api/http";
 
 export const usePillStore = defineStore('pills', () => {
   // 1. State
@@ -8,7 +8,7 @@ export const usePillStore = defineStore('pills', () => {
   const pill = ref(null)
   const count = ref(0) // ★ 전체 개수 저장용 변수 추가
 
-  const API_URL = 'http://127.0.0.1:8000'
+  
 
   const clearPillDetail = () => {
     pill.value = null
@@ -18,7 +18,7 @@ export const usePillStore = defineStore('pills', () => {
   const getPills = (page = 1, searchParams = {}) => {
     axios({
       method: 'get',
-      url: `${API_URL}/pills/`,
+      url: '/pills/',
       params: {
         page: page,
         ...searchParams
@@ -36,7 +36,7 @@ export const usePillStore = defineStore('pills', () => {
   const getPillDetail = function (pillId) {
     axios({
       method: 'get',
-      url: `${API_URL}/pills/${pillId}/`
+      url: `/pills/${pillId}/`
     })
       .then((response) => {
         pill.value = response.data

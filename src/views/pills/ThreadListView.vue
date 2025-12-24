@@ -65,9 +65,9 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRoute, RouterLink } from "vue-router";
-import axios from "axios";
+import axios from "@/api/http";
 
-const API_URL = "http://localhost:8000/pills";
+const API_URL = "/pills";
 const route = useRoute();
 const pillPk = route.params.pill_pk;
 const threads = ref([]);

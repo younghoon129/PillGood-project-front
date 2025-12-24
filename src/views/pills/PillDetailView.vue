@@ -4,7 +4,7 @@ import { useRoute, RouterView } from "vue-router";
 import { usePillStore } from "@/stores/pills";
 import { useAuthStore } from "@/stores/auth";
 import defaultImg from "@/assets/pill.jpg";
-import axios from "axios";
+import axios from "@/api/http";
 
 const route = useRoute();
 const store = usePillStore();
@@ -26,8 +26,8 @@ const fetchMyCabinet = async () => {
   try {
     const config = { headers: { Authorization: `Token ${authStore.token}` } };
     const [res1, res2] = await Promise.all([
-      axios.get("http://localhost:8000/pills/my-pills/", config),
-      axios.get("http://localhost:8000/pills/custom-pills/", config),
+      axios.get("/pills/my-pills/", config),
+      axios.get("/pills/custom-pills/", config),
     ]);
     myPills.value = res1.data;
     myCustomPills.value = res2.data;
@@ -91,7 +91,7 @@ const checkEnrollmentStatus = async () => {
 
   try {
     const response = await axios.get(
-      `http://localhost:8000/pills/${route.params.pill_pk}/is-enrolled/`,
+      `/pills/${route.params.pill_pk}/is-enrolled/`,
       { headers: { Authorization: `Token ${authStore.token}` } }
     );
     // 서버에서 받은 결과(true/false)를 변수에 저장
@@ -134,7 +134,7 @@ const handleTogglePill = async () => {
 
     await axios({
       method: method,
-      url: `http://localhost:8000/pills/${route.params.pill_pk}/toggle/`,
+      url: `/pills/${route.params.pill_pk}/toggle/`,
       ...config,
     });
 
@@ -190,7 +190,7 @@ onMounted(async () => {
   if (authStore.isLoggedIn) {
     try {
       const response = await axios.get(
-        "http://localhost:8000/accounts/profile/",
+        "/accounts/profile/",
         {
           headers: { Authorization: `Token ${authStore.token}` },
         }

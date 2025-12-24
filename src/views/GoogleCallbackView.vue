@@ -9,7 +9,7 @@
 import { onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
-import axios from "axios";
+import axios from "@/api/http";
 
 const route = useRoute();
 const router = useRouter();
@@ -19,37 +19,30 @@ onMounted(async () => {
   const code = route.query.code;
   if (code) {
     try {
-      // 🚩 현재 로그인된 상태라면 기존 토큰을 헤더에 실어서 보냄
-      const currentToken = localStorage.getItem("token");
-      const headers = currentToken
-        ? { Authorization: `Token ${currentToken}` }
-        : {};
-
-      const response = await axios.post(
-        "http://localhost:8000/accounts/google/callback/",
+      const currentToken = localStorage.getItem("token"); // 자체 회원 토큰
+      
+      const response = await axios.post("/accounts/google/callback/", 
         { code: code },
-        { headers: headers }
+        { 
+          headers: currentToken ? { Authorization: `Token ${currentToken}` } : {} 
+        }
       );
 
-      // 1. 우리 서비스 인증 정보 저장 (토큰 유지)
+      // 1. 구글 캘린더 전용 토큰 저장 (필수!)
+      localStorage.setItem("google_access_token", response.data.google_access_token);
+
+      // 2. 서비스 인증 정보 업데이트
+      // 백엔드에서 기존 username을 보내주므로 덮어써도 안전합니다.
       authStore.saveToken(response.data);
 
-      // 2. 구글 캘린더용 토큰 별도 저장
-      localStorage.setItem(
-        "google_access_token",
-        response.data.google_access_token
-      );
-
       if (response.data.status === "linked") {
-        alert("✨ 구글 캘린더 연동이 완료되었습니다!");
+        alert("✨ 기존 계정에 구글 캘린더가 연결되었습니다!");
       } else {
         alert(`✨ ${response.data.nickname}님, 환영합니다!`);
       }
-
       router.push({ name: "Home" });
     } catch (err) {
       console.error("인증 실패:", err);
-      alert("연동 과정에서 오류가 발생했습니다.");
       router.push({ name: "Login" });
     }
   }

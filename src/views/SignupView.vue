@@ -3,7 +3,7 @@ import { ref } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { useRouter } from "vue-router";
 import { onMounted } from "vue";
-import axios from "axios";
+import axios from "@/api/http";
 import { computed } from "vue";
 
 const authStore = useAuthStore();
@@ -70,8 +70,8 @@ const handleSignup = async () => {
 onMounted(async () => {
   try {
     const [catRes, allergyRes] = await Promise.all([
-      axios.get("http://localhost:8000/pills/categories/"),
-      axios.get("http://localhost:8000/accounts/allergies/"),
+      axios.get("/pills/categories/"),
+      axios.get("/accounts/allergies/"),
     ]);
 
     categories.value = catRes.data;

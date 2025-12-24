@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import axios from "@/api/http";
 import { useRouter } from 'vue-router'
 
 const categories = ref([])
@@ -38,7 +38,7 @@ const getIcon = (name) => {
 }
 
 onMounted(() => {
-  axios.get('http://127.0.0.1:8000/pills/categories/')
+  axios.get('/pills/categories/')
     .then(res => categories.value = res.data)
 })
 

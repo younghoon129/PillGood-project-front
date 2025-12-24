@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
+import axios from "@/api/http";
 
 const route = useRoute()
 const router = useRouter()
@@ -10,7 +10,7 @@ const substances = ref([])
 
 onMounted(() => {
   const catId = route.params.categoryId
-  axios.get(`http://127.0.0.1:8000/pills/categories/${catId}/`)
+  axios.get(`/pills/categories/${catId}/`)
     .then(res => {
       categoryName.value = res.data.name
       substances.value = res.data.substances

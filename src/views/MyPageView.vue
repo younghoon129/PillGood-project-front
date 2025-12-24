@@ -33,7 +33,7 @@
             <div class="info-box">
               <span class="label">성별 : </span>
               <span class="value">{{
-                profileData.gender === "M" ? "남성" : "여성"
+                profileData.gender === "M" || profileData.gender === null ? "남성" : "여성"
               }}</span>
             </div>
             <div class="info-box">
@@ -348,7 +348,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from "vue";
-import axios from "axios";
+import axios from "@/api/http";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import CalendarRegisterForm from "@/components/CalendarRegisterForm.vue";
@@ -380,7 +380,7 @@ const ingredientSearch = ref("");
 const selectedIngredients = ref([]);
 
 const fetchIngredients = async () => {
-  const res = await axios.get("http://localhost:8000/pills/all-ingredients/");
+  const res = await axios.get("/pills/all-ingredients/");
   allIngredients.value = res.data;
 };
 
@@ -402,7 +402,7 @@ const removeIngredient = (idx) => selectedIngredients.value.splice(idx, 1);
 const fetchCustomPills = async () => {
   try {
     const response = await axios.get(
-      "http://localhost:8000/pills/custom-pills/",
+      "/pills/custom-pills/",
       config
     );
     myCustomPills.value = response.data;
@@ -459,7 +459,7 @@ const handleCustomRegister = async () => {
     };
 
     await axios.post(
-      "http://localhost:8000/pills/custom-pills/",
+      "/pills/custom-pills/",
       payload,
       config
     );
@@ -482,8 +482,8 @@ const removePill = async (item) => {
   try {
     const url =
       item.type === "custom"
-        ? `http://localhost:8000/pills/custom-pills/${item.id}/`
-        : `http://localhost:8000/pills/${item.pill_id}/toggle/`;
+        ? `/pills/custom-pills/${item.id}/`
+        : `/pills/${item.pill_id}/toggle/`;
 
     await axios.delete(url, config);
     await refreshAllPills();
@@ -497,7 +497,7 @@ const removePill = async (item) => {
 const fetchMyPills = async () => {
   try {
     const response = await axios.get(
-      "http://localhost:8000/pills/my-pills/",
+      "/pills/my-pills/",
       config
     );
     myPills.value = response.data;
@@ -550,7 +550,7 @@ const loginType = computed(() => {
 
 const fetchAllCategories = async () => {
   try {
-    const response = await axios.get("http://localhost:8000/pills/categories/");
+    const response = await axios.get("/pills/categories/");
     allCategoryOptions.value = response.data;
   } catch (err) {
     console.error(err);
@@ -560,7 +560,7 @@ const fetchAllCategories = async () => {
 const fetchAllAllergies = async () => {
   try {
     const response = await axios.get(
-      "http://localhost:8000/accounts/allergies/"
+      "/accounts/allergies/"
     );
     allAllergyOptions.value = response.data;
   } catch (err) {
@@ -571,7 +571,7 @@ const fetchAllAllergies = async () => {
 const fetchProfile = async () => {
   try {
     const response = await axios.get(
-      "http://localhost:8000/accounts/profile/",
+      "/accounts/profile/",
       config
     );
     profileData.value = response.data;
@@ -624,7 +624,7 @@ const updateProfile = async () => {
       }
 
       await axios.post(
-        "http://localhost:8000/accounts/change-password/",
+        "/accounts/change-password/",
         {
           current_password: pwData.value.current_password,
           new_password: pwData.value.new_password,
@@ -634,7 +634,7 @@ const updateProfile = async () => {
     }
 
     const response = await axios.put(
-      "http://localhost:8000/accounts/profile/",
+      "/accounts/profile/",
       editedData.value,
       config
     );

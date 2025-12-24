@@ -147,7 +147,7 @@
 
 <script setup>
 import { ref } from "vue";
-import axios from "axios";
+import axios from "@/api/http";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -208,7 +208,7 @@ const handleFindId = async () => {
   if (!emailForId.value) return alert("이메일을 입력해 주세요.");
   isLoading.value = true;
   try {
-    const res = await axios.post("http://localhost:8000/accounts/find-id/", {
+    const res = await axios.post("/accounts/find-id/", {
       email: emailForId.value,
     });
     foundUsers.value = res.data.users;
@@ -224,7 +224,7 @@ const handleSendCode = async () => {
   if (!emailForPw.value) return alert("이메일을 입력해 주세요.");
   isLoading.value = true;
   try {
-    await axios.post("http://localhost:8000/accounts/password-reset-send/", {
+    await axios.post("/accounts/password-reset-send/", {
       email: emailForPw.value,
     });
     alert("인증번호가 발송되었습니다. 메일함을 확인해 주세요!");
@@ -242,7 +242,7 @@ const handleResetPassword = async () => {
     return alert("모든 항목을 입력해 주세요.");
   isLoading.value = true;
   try {
-    await axios.post("http://localhost:8000/accounts/password-reset-confirm/", {
+    await axios.post("/accounts/password-reset-confirm/", {
       email: emailForPw.value,
       code: authCode.value,
       new_password: newPassword.value,

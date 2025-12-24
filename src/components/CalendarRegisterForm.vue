@@ -117,7 +117,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import axios from "axios";
+import axios from "@/api/http";
 
 const pillName = ref("");
 const selectedDate = ref("");
@@ -125,40 +125,73 @@ const intakeTime = ref("09:00");
 const description = ref("");
 const isLoading = ref(false);
 const hasGoogleToken = ref(false);
-const isSuccess = ref(false); // 🚩 성공 상태 관리용 변수 추가
+const isSuccess = ref(false);
 
 const today = computed(() => new Date().toISOString().split("T")[0]);
 
-onMounted(() => {
-  hasGoogleToken.value = !!localStorage.getItem("google_access_token");
+// 1. 페이지 로드 시 DB 연동 상태 확인
+onMounted(async () => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    try {
+      const response = await axios.get("/accounts/check-google-link/", {
+        headers: { Authorization: `Token ${token}` }
+      });
+      hasGoogleToken.value = response.data.is_linked;
+    } catch (err) {
+      console.error("연동 상태 확인 실패:", err);
+      hasGoogleToken.value = false;
+    }
+  }
 });
 
+// ✅ 2. 구글 계정 연동하기 함수 (이 부분이 빠져있었습니다!)
 const connectGoogle = () => {
-  const CLIENT_ID =
-    "34177585488-sbk57388v5hfnjprm894sfl5ektmjpn9.apps.googleusercontent.com";
-  const REDIRECT_URI = "http://localhost:5173/login/google";
+  const CLIENT_ID = "34177585488-sbk57388v5hfnjprm894sfl5ektmjpn9.apps.googleusercontent.com";
+  
+  // .env 파일의 VITE_GOOGLE_REDIRECT_URI 값을 사용합니다.
+  const REDIRECT_URI = import.meta.env.VITE_GOOGLE_REDIRECT_URI; 
+  
   const scope = encodeURIComponent(
     "https://www.googleapis.com/auth/calendar.events openid email profile"
   );
+  
+  // 구글 로그인 페이지로 리다이렉트
   window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`;
 };
 
-const disconnectGoogle = () => {
+// 3. 연동 해제 함수
+const disconnectGoogle = async () => {
   if (confirm("연동을 해제하시겠습니까?")) {
-    localStorage.removeItem("google_access_token");
-    hasGoogleToken.value = false;
+    try {
+      const token = localStorage.getItem("token");
+      
+      // 🚩 백엔드 DB 상태를 변경합니다.
+      await axios.post("/accounts/google/unlink/", {}, {
+        headers: { Authorization: `Token ${token}` }
+      });
+
+      // UI 상태 반영
+      hasGoogleToken.value = false;
+      localStorage.removeItem("google_access_token");
+      
+      alert("✅ 구글 연동이 해제되었습니다.");
+    } catch (err) {
+      console.error("해제 실패:", err);
+      alert("연동 해제 중 오류가 발생했습니다.");
+    }
   }
 };
 
+// 4. 구글 캘린더 일정 등록 함수
 const registerToGoogle = async () => {
-  if (!pillName.value || !selectedDate.value)
-    return alert("항목을 입력해주세요.");
+  if (!pillName.value || !selectedDate.value) return alert("항목을 입력해주세요.");
   isLoading.value = true;
+  
   try {
     const djangoToken = localStorage.getItem("token");
-    const googleToken = localStorage.getItem("google_access_token");
     await axios.post(
-      "http://localhost:8000/pills/google-calendar/",
+      "/pills/google-calendar/",
       {
         pillName: pillName.value,
         date: selectedDate.value,
@@ -168,22 +201,22 @@ const registerToGoogle = async () => {
       {
         headers: {
           Authorization: `Token ${djangoToken}`,
-          "Google-Access-Token": googleToken,
         },
       }
     );
 
-    // 🚩 성공 처리 로직 변경
-    // alert("✅ 캘린더 등록 성공!"); // 기존 alert 제거
     pillName.value = "";
     description.value = "";
+    isSuccess.value = true;
+    setTimeout(() => { isSuccess.value = false; }, 2500);
 
-    isSuccess.value = true; // 성공 애니메이션 시작
-    setTimeout(() => {
-      isSuccess.value = false; // 2.5초 후 애니메이션 종료
-    }, 2500);
   } catch (err) {
-    alert("등록 실패: 연동 상태를 확인해주세요.");
+    if (err.response && err.response.status === 401) {
+      alert("인증이 만료되었습니다. 다시 연동해주세요.");
+      hasGoogleToken.value = false;
+    } else {
+      alert("등록 실패: 연동 상태를 확인해주세요.");
+    }
   } finally {
     isLoading.value = false;
   }
