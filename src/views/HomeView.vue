@@ -128,6 +128,14 @@ const alertNotReady = () => {
                 <li>🤖 개인별 최적화된 AI 맞춤 케어</li>
               </ul>
               <p class="highlight-text">우리는 데이터로 더 정직한 건강 세상을 만듭니다.</p>
+              <div class="source-info">
+                <p>📢 데이터 출처 안내</p>
+                <div class="source-details">
+                  <span>영양제 정보 : <strong>식품의약품안전처</strong></span>
+                  <span class="divider">|</span>
+                  <span>이미지 · 구매 정보 : <strong>네이버</strong></span>
+                </div>
+              </div>
             </div>
 
             <button @click="closeAboutModal" class="confirm-btn">확인</button>
@@ -139,6 +147,57 @@ const alertNotReady = () => {
 </template>
 
 <style scoped>
+.source-info {
+  margin-top: 24px;
+  margin-bottom: 10px;
+  padding-top: 15px;
+  border-top: 1px solid #e9ecef;
+  
+  /* 1. 다시 가운데 정렬로 복귀 */
+  text-align: center;
+  
+  /* 2. 🔥 핵심: 전체 위치를 강제로 왼쪽으로 조금 밀기 */
+  position: relative; 
+  left: -10px; /* 마이너스(-) 값을 주면 왼쪽으로 이동합니다. 숫자를 조절해보세요! */
+}
+
+/* "데이터 출처 안내" 타이틀 */
+.source-info p {
+  font-size: 0.75rem;
+  color: #adb5bd;
+  margin-bottom: 6px;
+  font-weight: 500;
+  
+  /* 타이틀도 가운데 정렬 유지를 위해 flex + center 사용 */
+  display: flex;
+  justify-content: center; /* 가운데 정렬 */
+  align-items: center;
+  gap: 4px;
+}
+
+/* 실제 출처 텍스트들 */
+.source-details {
+  display: flex;
+  justify-content: center; /* 내용물 가운데 정렬 */
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.7rem;
+  color: #868e96;
+}
+
+/* (나머지 스타일 동일) */
+.source-details strong {
+  font-weight: 600;
+  color: #495057;
+}
+
+.divider {
+  color: #dee2e6;
+  font-size: 0.6rem;
+}
+
+
 /* ... 기존 스타일 유지 ... */
 
 .vision-text {
