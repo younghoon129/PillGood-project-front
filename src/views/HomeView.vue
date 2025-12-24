@@ -484,12 +484,18 @@ const alertNotReady = () => {
 /* [수정 6] 기업 소개 모달 스타일 추가 */
 .about-window {
   width: 90%;
-  max-width: 700px;
-  height: 1000px;
+  max-width: 500px;
+
+  height: 90%;
+  display: flex;
   flex-direction: column;
   position: relative;
+
   padding: 0;
-  overflow-y: scroll;
+  padding-right: 14px;
+  overflow-y: auto;
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(150, 150, 150, 0.4) transparent;
 }
 
 .about-content {
