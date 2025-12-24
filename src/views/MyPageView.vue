@@ -1122,6 +1122,10 @@ const moveToDeletePage = () => {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  overflow : 'auto';
+}
+.modal-body.scrollable {
+  overflow-y : 'auto';
 }
 .modal-footer {
   padding: 16px 24px 24px;

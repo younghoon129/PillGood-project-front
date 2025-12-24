@@ -2,8 +2,11 @@
 import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import ChatBotView from "./ChatBotView.vue";
+import { useAuthStore } from "@/stores/auth";
+import Swal from 'sweetalert2';
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 const showChatModal = ref(false);
 const showAboutModal = ref(false);
@@ -36,6 +39,28 @@ const goRecommendation = () => {
 };
 
 const goChatBot = () => {
+  if (!authStore.isLoggedIn) {
+  
+    Swal.fire({
+      title: '<span style="font-size: 1.5rem; color: #1c7ed6;">잠깐만요!</span>',
+      html: `
+        <div style="font-size: 1rem; line-height: 1.6; color: #495057;">
+          AI 추천 서비스는 <b>PillGood 회원</b>에게만 제공됩니다.<br>
+          지금 로그인하고 <span style="color: #1c7ed6; font-weight: bold;">나만의 영양제 멘토</span>를 만나보세요!
+        </div>
+      `,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: '로그인하러 갈게요',
+      cancelButtonText: '다음에 할게요',
+      confirmButtonColor: '#1c7ed6',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        router.push({ name: "Login" });
+      }
+    });
+    return;
+  }
   showChatModal.value = true;
 };
 
